@@ -310,6 +310,10 @@ int list_template_3(const char *ins, int argc, char **argv,
             if (m_list[number1] == NULL)
                 //return STATE_DATANULL;
                 return STATE_COMPLETE;
+            
+            if(same("list_unique",argv[1]) && argc == 2)
+                listfunc(&(m_list[number1]), NULL);
+
             if (samen("list", argv[2]))
             {
                 number2 = getNum("list", argv[2]);
