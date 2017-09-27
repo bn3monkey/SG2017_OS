@@ -68,6 +68,7 @@ void ilist_max(struct list** list);
 void ilist_min(struct list** list);
 void ilist_reverse(struct list** list);
 void ilist_sort(struct list** list);
+void ilist_shuffle(struct list** list);
 
 //list_instruction_2
 void ilist_push_back(struct list** list,int value);

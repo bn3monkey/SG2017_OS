@@ -254,7 +254,14 @@ int parseHexa_long(char* str)
 // return : if error, NO NUMBER. or integer
 int parseHexa(char* str, int start, int end)
 {
-    int i = start,value = 0;
+	int i = start, value = 0;
+	
+	int sign=1;
+	if(str[i] == '-')
+	{
+		i++;
+		sign = -1;
+	}
     for(;i<=end;i++)
     {
         if((str[i] >= '0' && str[i] <= '9') ||
@@ -275,7 +282,7 @@ int parseHexa(char* str, int start, int end)
             return NONUMBER;
         
     }
-    return value;
+    return sign * value;
     
 }
 
@@ -283,7 +290,15 @@ int parseHexa(char* str, int start, int end)
 // return : if error, NO NUMBER. or integer
 int parseInt(char* str, int start, int end)
 {
-    int i = start,value = 0;
+	int i = start,value = 0;
+	
+	int sign=1;
+	if(str[i] == '-')
+	{
+		i++;
+		sign = -1;
+	}
+
     for(;i<=end;i++)
     {
         if(str[i] >= '0' && str[i] <= '9')
@@ -296,7 +311,7 @@ int parseInt(char* str, int start, int end)
             return NONUMBER;
         
     }
-    return value;
+    return sign * value;
  
 }
 

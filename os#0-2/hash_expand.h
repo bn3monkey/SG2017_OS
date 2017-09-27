@@ -24,7 +24,7 @@ struct hash_elem * getHashelem(struct list_elem *elem);
 struct data_hash* newDH(int data);
 /* !! Only use after removing from Hash !! */
 //delete new node of data_hash whicih contains hash_elem
-void deleteDH(struct hash_elem *elem); 
+void deleteDH(DH *d);
 //get data_hash which contains hash_elem
 struct data_hash* getDH(const struct hash_elem *elem);
 //get value of data_hash which contains hash_elem
@@ -55,6 +55,19 @@ unsigned hash_hash(const struct hash_elem *elem, void *aux);
 //For free used in hash_action_func 
 void hash_action_free(struct hash_elem *elem, void *aux);
 //For something used in hash_action_func
-void hash_action_something(struct hash_elem *elem, void * aux);
+void hash_action_square(struct hash_elem *elem, void * aux);
+void hash_action_triple(struct hash_elem *elem, void * aux);
+
+// For the Shell Instruction
+void ihash_empty(struct hash** hash);
+void ihash_size(struct hash** hash);
+void ihash_clear(struct hash** hash);
+
+void ihash_insert(struct hash** hash, int value);
+void ihash_delete(struct hash** hash, int value);
+void ihash_find(struct hash** hash, int value);
+void ihash_replace(struct hash** hash, int value);
+
+void ihash_apply(struct hash** hash, char* cmd);
 
 #endif

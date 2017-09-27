@@ -9,6 +9,8 @@
 #endif
 
 #include "stdio.c"	// 'hex_dump' : defined in stdio.c(org:pintos/src/lib/)
+#include "string.h"
+
 #define ASSERT(CONDITION) assert(CONDITION)	// patched for proj0-2
 
 /* Element type.
@@ -405,4 +407,125 @@ void bitmap_print(struct bitmap * bitmap)
       printf("%d", (int)((*(bitmap->bits) >> i) & 1));
     }
     printf("\n");
+}
+
+
+//For Shell
+void ibitmap_dump(struct bitmap** bitmap)
+{
+    bitmap_dump((const struct bitmap *)(*bitmap));
+}
+void ibitmap_size(struct bitmap** bitmap)
+{
+    printf("%d\n" ,(int)bitmap_size((const struct bitmap *)(*bitmap)));
+}
+
+void ibitmap_set_all(struct bitmap** bitmap, char* boolean)
+{
+    bool b;
+    if(strcmp(boolean, "true") == 0)
+        b = true;
+    if(strcmp(boolean, "false") == 0)
+        b = false;
+
+    bitmap_set_all((*bitmap), b);      
+}
+
+void ibitmap_mark(struct bitmap** bitmap, int num)
+{
+    bitmap_mark(*bitmap, (size_t)num);  
+}
+void ibitmap_expand(struct bitmap** bitmap, int num)
+{
+    *bitmap = bitmap_expand(*bitmap, num);    
+}
+void ibitmap_flip(struct bitmap** bitmap, int num)
+{
+    bitmap_flip(*bitmap, num);   
+}
+void ibitmap_reset(struct bitmap** bitmap, int num)
+{
+    bitmap_reset(*bitmap, (size_t)num);
+}
+void ibitmap_test(struct bitmap** bitmap, int num)
+{
+    bool check = bitmap_test((const struct bitmap *)(*bitmap), (size_t)num);
+    printf("%s\n", check ? "true" : "false" );
+}
+
+void ibitmap_all(struct bitmap** bitmap, int num1, int num2)
+{
+    bool check = bitmap_all((const struct bitmap *)*bitmap, (size_t)num1, (size_t)num2);
+    printf("%s\n", check ? "true" : "false" ); 
+}
+void ibitmap_any(struct bitmap** bitmap, int num1, int num2)
+{
+    bool check = bitmap_any((const struct bitmap *)(*bitmap), (size_t)num1, (size_t)num2);
+    printf("%s\n", check ? "true" : "false" );      
+}
+void ibitmap_none(struct bitmap** bitmap, int num1, int num2)
+{
+    bool check = bitmap_none(*bitmap, (size_t)num1, (size_t)num2);
+    printf("%s\n", check ? "true" : "false" );    
+}
+
+void ibitmap_set(struct bitmap** bitmap, int num1, char* boolean)
+{
+    bool b;
+    if(strcmp(boolean, "true") == 0)
+       b = true;
+    if(strcmp(boolean, "false") == 0)
+       b = false;
+    bitmap_set(*bitmap, (size_t)num1, b);     
+}
+
+void ibitmap_contains(struct bitmap** bitmap, int num1, int num2, char* boolean)
+{
+    bool check;
+     bool b;
+     if(strcmp(boolean, "true") == 0)
+        b = true;
+     if(strcmp(boolean, "false") == 0)
+        b = false;
+    check = bitmap_contains((const struct bitmap *)(*bitmap), (size_t)num1, (size_t)num2, b);
+    printf("%s\n", check ? "true" : "false" );
+}
+void ibitmap_count(struct bitmap** bitmap, int num1, int num2, char* boolean)
+{
+  bool check;
+     bool b;
+     if(strcmp(boolean, "true") == 0)
+         b = true;
+     if(strcmp(boolean, "false") == 0)
+         b = false;
+    check = bitmap_contains((const struct bitmap *)(*bitmap), (size_t)num1, (size_t)num2, b);
+    printf("%s\n", check ? "true" : "false" );     
+}
+void ibitmap_scan(struct bitmap** bitmap, int num1, int num2, char* boolean)
+{
+  bool b;
+  if(strcmp(boolean, "true") == 0)
+      b = true;
+  if(strcmp(boolean, "false") == 0)
+      b = false;
+  printf("%d\n", (int)bitmap_scan((const struct bitmap *)(*bitmap), (size_t)num1, (size_t)num2, b));
+}
+void ibitmap_scan_and_flip(struct bitmap** bitmap, int num1, int num2, char* boolean)
+{
+  bool b;
+  if(strcmp(boolean, "true") == 0)
+      b = true;
+  if(strcmp(boolean, "false") == 0)
+      b = false;
+  printf("%d\n", (int)bitmap_scan_and_flip(*bitmap, (size_t)num1, (size_t)num2, b));
+
+}
+void ibitmap_set_multiple(struct bitmap** bitmap, int num1, int num2, char* boolean)
+{  
+    bool b;
+    if(strcmp(boolean, "true") == 0)
+        b = true;
+    if(strcmp(boolean, "false") == 0)
+       b = false;
+    bitmap_set_multiple(*bitmap, (size_t)num1, (size_t)num2, b);
 }

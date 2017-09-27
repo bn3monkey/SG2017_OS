@@ -54,7 +54,7 @@ static int template_1(const char *ins, int argc, char **argv,
                         return STATE_NOINT;
                     if (number >= 10)
                         return STATE_EXCESSINT;
-                    hashfunc(&(m_hash[number]));
+                        hashfunc(&(m_hash[number]));
                     return STATE_COMPLETE;
                 }
                 return STATE_NOPARAMETER;
@@ -122,7 +122,7 @@ static int template_2(const char *ins, int argc, char **argv,
             if(m_hash[number] == NULL)
                 return STATE_DATANULL;
 
-            hashfunc(&(m_hash[number]));
+                hashfunc(&(m_hash[number]));
             return STATE_COMPLETE;
         }
         else if (samen("bm", argv[1]))
@@ -186,7 +186,7 @@ static int template_3(const char *ins, int argc, char **argv,
                 //return STATE_DATANULL;
             	return STATE_COMPLETE;
 
-	    hashfunc((m_hash[number]));
+                hashfunc((m_hash[number]));
             return STATE_COMPLETE;
         }
         else if (samen("bm", argv[1]))
@@ -468,6 +468,11 @@ int ins_list_sort(int argc, char** argv)
     return list_template_1("list_sort",argc,argv,ilist_sort);
 }
 
+int ins_list_shuffle(int argc, char ** argv)
+{
+    return list_template_1("list_shuffle",argc,argv,ilist_shuffle);
+}
+
 //The Template of list instruction 2
 int ins_list_push_back(int argc, char** argv)
 {
@@ -507,4 +512,400 @@ int ins_list_swap(int argc, char ** argv)
 int ins_list_splice(int argc, char** argv)
 {
     return list_template_5("list_splice",argc,argv,ilist_splice);
+}
+
+
+
+//The Template of hash instruction
+static int hash_template_1(const char *ins, int argc, char **argv,
+                    void (*hashfunc)(struct hash **))
+{
+    int number;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 2)
+            return STATE_NOPARAMETER;
+
+        if (samen("hash", argv[1]))
+        {
+            number = getNum("hash", argv[1]);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (m_hash[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+                hashfunc(&(m_hash[number]));
+            return STATE_COMPLETE;
+        }
+    }
+    return STATE_INCOMPLETE;
+}
+
+static int hash_template_2(const char *ins, int argc, char **argv,
+                    void (*hashfunc)(struct hash **, int))
+{
+    int number, size;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 3)
+            return STATE_NOPARAMETER;
+
+        if (samen("hash", argv[1]))
+        {
+            number = getNum("hash", argv[1]);
+            size = parseInt(argv[2], 0, strlen(argv[2]) - 1);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (size == NONUMBER)
+                return STATE_NOINT;
+            if (m_hash[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            hashfunc(&(m_hash[number]), size);
+            return STATE_COMPLETE;
+        }
+
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+static int hash_template_3(const char *ins, int argc, char **argv,
+                    void (*hashfunc)(struct hash **, char *))
+{
+    int number1;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 3)
+            return STATE_NOPARAMETER;
+
+        if (samen("hash", argv[1]))
+        {
+            number1 = getNum("hash", argv[1]);
+            if (number1 == NONUMBER)
+                return STATE_NOINT;
+            if (number1 >= 10)
+                return STATE_EXCESSINT;
+            if (m_hash[number1] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            hashfunc(&(m_hash[number1]), argv[2]);
+            return STATE_COMPLETE;
+            
+            return STATE_NOPARAMETER;
+        }
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+int ins_hash_empty(int argc, char ** argv)
+{
+    return hash_template_1("hash_empty", argc, argv, ihash_empty);
+}
+int ins_hash_size(int argc, char** argv)
+{
+    return hash_template_1("hash_size", argc, argv, ihash_size);
+}
+int ins_hash_clear(int argc, char** argv)
+{
+    return hash_template_1("hash_clear", argc, argv, ihash_clear);
+}
+
+int ins_hash_insert(int argc, char ** argv)
+{
+    return hash_template_2("hash_insert", argc, argv, ihash_insert);
+}
+int ins_hash_delete(int argc, char** argv)
+{
+    return hash_template_2("hash_delete", argc, argv, ihash_delete);
+}
+int ins_hash_find(int argc, char** argv)
+{
+    return hash_template_2("hash_find", argc, argv, ihash_find);
+}
+int ins_hash_replace(int argc, char** argv)
+{
+    return hash_template_2("hash_replace", argc, argv, ihash_replace);
+}
+
+int ins_hash_apply(int argc, char** argv)
+{
+    return hash_template_3("hash_apply", argc, argv, ihash_apply);    
+}
+
+//The Template of bitmap instruction
+static int bitmap_template_1(const char *ins, int argc, char **argv,
+                           void (*bitmapfunc)(struct bitmap **))
+{
+    int number;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 2)
+            return STATE_NOPARAMETER;
+
+        if (samen("bm", argv[1]))
+        {
+            number = getNum("bm", argv[1]);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (m_bitmap[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            bitmapfunc(&(m_bitmap[number]));
+            return STATE_COMPLETE;
+        }
+    }
+    return STATE_INCOMPLETE;
+}
+
+static int bitmap_template_2(const char *ins, int argc, char **argv,
+                           void (*bitmapfunc)(struct bitmap **, int))
+{
+    int number, size;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 3)
+            return STATE_NOPARAMETER;
+
+        if (samen("bm", argv[1]))
+        {
+            number = getNum("bm", argv[1]);
+            size = parseInt(argv[2], 0, strlen(argv[2]) - 1);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (size == NONUMBER)
+                return STATE_NOINT;
+            if (m_bitmap[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            bitmapfunc(&(m_bitmap[number]), size);
+            return STATE_COMPLETE;
+        }
+
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+static int bitmap_template_3(const char *ins, int argc, char **argv,
+                           void (*bitmapfunc)(struct bitmap **, char *))
+{
+    int number1;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 3)
+            return STATE_NOPARAMETER;
+
+        if (samen("bm", argv[1]))
+        {
+            number1 = getNum("bm", argv[1]);
+            if (number1 == NONUMBER)
+                return STATE_NOINT;
+            if (number1 >= 10)
+                return STATE_EXCESSINT;
+            if (m_bitmap[number1] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            bitmapfunc(&(m_bitmap[number1]), argv[2]);
+            return STATE_COMPLETE;
+
+            return STATE_NOPARAMETER;
+        }
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+static int bitmap_template_4(const char *ins, int argc, char **argv,
+                             void (*bitmapfunc)(struct bitmap **, int, int))
+{
+    int number, size1, size2;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 4)
+            return STATE_NOPARAMETER;
+
+        if (samen("bm", argv[1]))
+        {
+            number = getNum("bm", argv[1]);
+            size1 = parseInt(argv[2], 0, strlen(argv[2]) - 1);
+            size2 = parseInt(argv[3], 0, strlen(argv[3]) - 1);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (size1 == NONUMBER)
+                return STATE_NOINT;
+            if (size2 == NONUMBER)
+                return STATE_NOINT;
+            if (m_bitmap[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            bitmapfunc(&(m_bitmap[number]), size1, size2);
+            return STATE_COMPLETE;
+        }
+
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+static int bitmap_template_5(const char *ins, int argc, char **argv,
+                             void (*bitmapfunc)(struct bitmap **, int, char*))
+{
+    int number, size1;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 4)
+            return STATE_NOPARAMETER;
+
+        if (samen("bm", argv[1]))
+        {
+            number = getNum("bm", argv[1]);
+            size1 = parseInt(argv[2], 0, strlen(argv[2]) - 1);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (size1 == NONUMBER)
+                return STATE_NOINT;
+            if (m_bitmap[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            bitmapfunc(&(m_bitmap[number]), size1, argv[3]);
+            return STATE_COMPLETE;
+        }
+
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+static int bitmap_template_6(const char *ins, int argc, char **argv,
+                             void (*bitmapfunc)(struct bitmap **, int, int, char*))
+{
+    int number, size1, size2;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 5)
+            return STATE_NOPARAMETER;
+
+        if (samen("bm", argv[1]))
+        {
+            number = getNum("bm", argv[1]);
+            size1 = parseInt(argv[2], 0, strlen(argv[2]) - 1);
+            size2 = parseInt(argv[3], 0, strlen(argv[3]) - 1);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (size1 == NONUMBER)
+                return STATE_NOINT;
+            if (size2 == NONUMBER)
+                return STATE_NOINT;
+            if (m_bitmap[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            bitmapfunc(&(m_bitmap[number]), size1, size2, argv[4]);
+            return STATE_COMPLETE;
+        }
+
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+int ins_bitmap_dump(int argc, char** argv)
+{
+    return bitmap_template_1("bitmap_dump", argc, argv,ibitmap_dump);
+}
+int ins_bitmap_size(int argc, char** argv)
+{
+    return bitmap_template_1("bitmap_size", argc, argv,ibitmap_size);    
+}
+
+
+int ins_bitmap_mark(int argc, char** argv)
+{
+    return bitmap_template_2("bitmap_mark", argc, argv, ibitmap_mark);
+}
+int ins_bitmap_expand(int argc, char** argv)
+{
+    return bitmap_template_2("bitmap_expand", argc, argv,ibitmap_expand);    
+}
+int ins_bitmap_flip(int argc, char** argv)
+{
+    return bitmap_template_2("bitmap_flip", argc, argv,ibitmap_flip);     
+}
+int ins_bitmap_reset(int argc, char** argv)
+{
+    return bitmap_template_2("bitmap_reset", argc, argv,ibitmap_reset);     
+}
+int ins_bitmap_test(int argc, char** argv)
+{
+    return bitmap_template_2("bitmap_test", argc, argv,ibitmap_test);     
+}
+
+
+int ins_bitmap_set_all(int argc, char** argv)
+{
+    return bitmap_template_3("bitmap_mark", argc, argv, ibitmap_set_all);   
+}
+
+
+int ins_bitmap_all(int argc, char** argv)
+{
+    return bitmap_template_4("bitmap_all", argc, argv,ibitmap_all);    
+}
+int ins_bitmap_any(int argc, char** argv)
+{
+    return bitmap_template_4("bitmap_any", argc, argv,ibitmap_any);  
+}
+int ins_bitmap_none(int argc, char** argv)
+{
+    return bitmap_template_4("bitmap_none", argc, argv,ibitmap_none);     
+}
+
+int ins_bitmap_set(int argc, char** argv)
+{
+    return bitmap_template_5("bitmap_set", argc, argv,ibitmap_set);      
+}
+
+int ins_bitmap_contains(int argc, char** argv)
+{
+    return bitmap_template_6("bitmap_contains", argc, argv, ibitmap_contains);      
+}
+int ins_bitmap_count(int argc, char** argv)
+{
+    return bitmap_template_6("bitmap_count", argc, argv, ibitmap_count);       
+}
+int ins_bitmap_scan(int argc, char** argv)
+{
+    return bitmap_template_6("bitmap_scan", argc, argv, ibitmap_scan);       
+}
+int ins_bitmap_scan_and_flip(int argc, char** argv)
+{
+    return bitmap_template_6("bitmap_scan_and_flip", argc, argv, ibitmap_scan_and_flip);     
+}
+int ins_bitmap_set_multiple(int argc, char** argv)
+{
+    return bitmap_template_6("bitmap_set_multiple", argc, argv, ibitmap_set_multiple); 
 }

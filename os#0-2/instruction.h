@@ -55,3 +55,42 @@ int ins_list_insert(int argc, char** argv);
 int ins_list_swap(int argc, char ** argv);
 
 int ins_list_splice(int argc, char** argv);
+
+int ins_list_shuffle(int argc, char ** argv);
+
+/* instruction_hash */
+int ins_hash_empty(int argc, char ** argv);
+int ins_hash_size(int argc, char** argv);
+int ins_hash_clear(int argc, char** argv);
+
+int ins_hash_insert(int argc, char ** argv);
+int ins_hash_delete(int argc, char** argv);
+int ins_hash_find(int argc, char** argv);
+int ins_hash_replace(int argc, char** argv);
+
+int ins_hash_apply(int argc, char** argv);
+
+/* instruction_bitmap */
+int ins_bitmap_dump(int argc, char** argv);
+int ins_bitmap_size(int argc, char** argv);
+
+
+int ins_bitmap_set_all(int argc, char** argv);
+
+int ins_bitmap_mark(int argc, char** argv);
+int ins_bitmap_expand(int argc, char** argv);
+int ins_bitmap_flip(int argc, char** argv);
+int ins_bitmap_reset(int argc, char** argv);
+int ins_bitmap_test(int argc, char** argv);
+
+int ins_bitmap_all(int argc, char** argv);
+int ins_bitmap_any(int argc, char** argv);
+int ins_bitmap_none(int argc, char** argv);
+
+int ins_bitmap_set(int argc, char** argv);
+
+int ins_bitmap_contains(int argc, char** argv);
+int ins_bitmap_count(int argc, char** argv);
+int ins_bitmap_scan(int argc, char** argv);
+int ins_bitmap_scan_and_flip(int argc, char** argv);
+int ins_bitmap_set_multiple(int argc, char** argv);

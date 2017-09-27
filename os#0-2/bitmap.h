@@ -55,4 +55,29 @@ struct bitmap *bitmap_expand(struct bitmap *bitmap, int size);
 void bitmap_new(struct bitmap **bitmap, size_t bit_cnt);
 void bitmap_delete(struct bitmap **bitmap);
 void bitmap_print(struct bitmap *bitmap);
+
+//For Shell
+void ibitmap_dump(struct bitmap** bitmap);
+void ibitmap_size(struct bitmap** bitmap);
+
+
+void ibitmap_set_all(struct bitmap** bitmap, char* boolean);
+
+void ibitmap_mark(struct bitmap** bitmap, int num);
+void ibitmap_expand(struct bitmap** bitmap, int num);
+void ibitmap_flip(struct bitmap** bitmap, int num);
+void ibitmap_reset(struct bitmap** bitmap, int num);
+void ibitmap_test(struct bitmap** bitmap, int num);
+
+void ibitmap_all(struct bitmap** bitmap, int num1, int num2);
+void ibitmap_any(struct bitmap** bitmap, int num1, int num2);
+void ibitmap_none(struct bitmap** bitmap, int num1, int num2);
+
+void ibitmap_set(struct bitmap** bitmap, int num1, char* boolean);
+
+void ibitmap_contains(struct bitmap** bitmap, int num1, int num2, char* boolean);
+void ibitmap_count(struct bitmap** bitmap, int num1, int num2, char* boolean);
+void ibitmap_scan(struct bitmap** bitmap, int num1, int num2, char* boolean);
+void ibitmap_scan_and_flip(struct bitmap** bitmap, int num1, int num2, char* boolean);
+void ibitmap_set_multiple(struct bitmap** bitmap, int num1, int num2, char* boolean);
 #endif /* lib/kernel/bitmap.h */

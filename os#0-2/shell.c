@@ -180,14 +180,104 @@ int shell_list(Argument arg)
     temp = ins_list_splice(arc, arv);
     if (temp != 0)
         return temp;
+    temp = ins_list_shuffle(arc, arv);
+    if( temp != 0)
+        return temp;
     return STATE_INCOMPLETE;
 }
 int shell_hash(Argument arg)
 {
+    int temp = STATE_INCOMPLETE;
+
+    temp = ins_hash_empty(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_hash_size(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_hash_clear(arc, arv);
+    if (temp != 0)
+      return temp;
+    
+    temp = ins_hash_insert(arc, arv);
+    if (temp != 0)
+      return temp;
+    temp = ins_hash_delete(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_hash_find(arc, arv);
+    if (temp != 0)
+      return temp;
+    temp = ins_hash_replace(arc, arv);
+    if (temp != 0)
+         return temp;
+    
+    temp = ins_hash_apply(arc, arv);
+    if (temp != 0)
+        return temp;
     return STATE_INCOMPLETE;
 }
 int shell_bitmap(Argument arg)
 {
+    int temp = STATE_INCOMPLETE;
+
+    temp =  ins_bitmap_dump(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp =  ins_bitmap_size(arc, arv);
+    if (temp != 0)
+        return temp;
+    
+    temp =  ins_bitmap_set_all(arc, arv);
+    if (temp != 0)
+        return temp;
+    
+    temp =  ins_bitmap_mark(arc, arv);
+    if (temp != 0)
+         return temp;
+    temp =  ins_bitmap_expand(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp =  ins_bitmap_flip(arc, arv);
+    if (temp != 0)
+         return temp;
+    temp =  ins_bitmap_reset(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp =  ins_bitmap_test(arc, arv);
+    if (temp != 0)
+        return temp;
+    
+    temp =  ins_bitmap_all(arc, arv);
+    if (temp != 0)
+         return temp;
+    temp =  ins_bitmap_any(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp =  ins_bitmap_none(arc, arv);
+    if (temp != 0)
+        return temp;
+    
+    temp =  ins_bitmap_set(arc, arv);
+    if (temp != 0)
+        return temp;
+    
+    temp =  ins_bitmap_contains(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp =  ins_bitmap_count(arc, arv);
+    if (temp != 0)
+         return temp;
+    temp =  ins_bitmap_scan(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp =  ins_bitmap_scan_and_flip(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp =  ins_bitmap_set_multiple(arc, arv);
+    if (temp != 0)
+        return temp;
+
     return STATE_INCOMPLETE;
 }
 void shell_nothing(Argument arg)

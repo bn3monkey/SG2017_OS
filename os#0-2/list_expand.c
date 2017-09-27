@@ -224,6 +224,10 @@ void ilist_sort(struct list** list)
 {
 	list_sort(*list, list_less_cmp, NULL);
 }
+void ilist_shuffle(struct list** list)
+{
+	list_shuffle(*list);
+}
 
 //list_instruction_2
 void ilist_push_back(struct list** list,int value)
@@ -243,6 +247,9 @@ void ilist_insert_ordered(struct list** list,int value)
 }
 void ilist_remove(struct list** list, int index)
 {
+	if(index < 0)
+		return;
+
 	struct list_elem* temp = list_findi(*list, index);
 	if(temp==NULL)
 		return;
@@ -267,7 +274,11 @@ void ilist_unique(struct list** dest, struct list** sour)
 //list_instruction_4
 void ilist_insert(struct list** list, int index, int value)
 {
+	if(index < 0)
+		return;
+
 	struct list_elem* temp = list_findi(*list, index);
+
 	if(temp==NULL)
 		return;
 	//temp = temp->prev;
@@ -276,6 +287,9 @@ void ilist_insert(struct list** list, int index, int value)
 }
 void ilist_swap(struct list** list, int index1, int index2)
 {
+	if(index1 <0 && index2 <0)
+		return;
+
 	struct list_elem* temp1 = list_findi(*list, index1);
 	if(temp1==NULL)
 		return;
@@ -288,6 +302,9 @@ void ilist_swap(struct list** list, int index1, int index2)
 //list_instruction_5
 void ilist_splice(struct list** dest, int index, struct list** sour, int start, int end)
 {
+	if(index <0 || start <0 || end <0)
+		return;
+
 	struct list_elem* before = list_findi(*dest, index);
 	if(before==NULL)
 		return;
@@ -301,4 +318,5 @@ void ilist_splice(struct list** dest, int index, struct list** sour, int start, 
 
 	list_splice(before, first, last);
 }
+
 
