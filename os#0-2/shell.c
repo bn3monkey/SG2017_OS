@@ -234,7 +234,9 @@ int shell_bitmap(Argument arg)
     
     temp =  ins_bitmap_mark(arc, arv);
     if (temp != 0)
+    {
          return temp;
+    }
     temp =  ins_bitmap_expand(arc, arv);
     if (temp != 0)
         return temp;

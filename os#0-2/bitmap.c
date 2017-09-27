@@ -169,7 +169,9 @@ bitmap_mark (struct bitmap *b, size_t bit_idx)
   /* This is equivalent to `b->bits[idx] |= mask' except that it
      is guaranteed to be atomic on a uniprocessor machine.  See
      the description of the OR instruction in [IA32-v2b]. */
-  asm ("orl %k1, %k0" : "=m" (b->bits[idx]) : "r" (mask) : "cc");
+  
+    //b->bits[idx] |= mask;
+    asm ("orl %k1, %k0" : "=m" (b->bits[idx]) : "r" (mask) : "cc");
 }
 
 /* Atomically sets the bit numbered BIT_IDX in B to false. */
@@ -373,7 +375,7 @@ bitmap_write (const struct bitmap *b, struct file *file)
 void
 bitmap_dump (const struct bitmap *b) 
 {
-  hex_dump (0, b->bits, byte_cnt (b->bit_cnt)/2, false);
+  hex_dump (0, b->bits, byte_cnt (b->bit_cnt) / 2, false);
 }
 
 struct bitmap *bitmap_expand(struct bitmap *bitmap, int size)
@@ -401,10 +403,12 @@ void bitmap_delete(struct bitmap **bitmap)
 }
 void bitmap_print(struct bitmap * bitmap)
 {
-    int i;
-    for(i=0;i<bitmap->bit_cnt;i++)
-    {
-      printf("%d", (int)((*(bitmap->bits) >> i) & 1));
+    size_t idx;;
+
+    //printf("%zu %zu\n",bitmap_size(bitmap),bitmap->bits[0]);
+
+    for(idx = 0; idx < bitmap_size(bitmap); idx++) {
+      printf("%d", bitmap_test(bitmap, idx));
     }
     printf("\n");
 }
@@ -433,7 +437,7 @@ void ibitmap_set_all(struct bitmap** bitmap, char* boolean)
 
 void ibitmap_mark(struct bitmap** bitmap, int num)
 {
-    bitmap_mark(*bitmap, (size_t)num);  
+  bitmap_mark(*bitmap, (size_t)num);  
 }
 void ibitmap_expand(struct bitmap** bitmap, int num)
 {
@@ -492,14 +496,12 @@ void ibitmap_contains(struct bitmap** bitmap, int num1, int num2, char* boolean)
 }
 void ibitmap_count(struct bitmap** bitmap, int num1, int num2, char* boolean)
 {
-  bool check;
      bool b;
      if(strcmp(boolean, "true") == 0)
          b = true;
      if(strcmp(boolean, "false") == 0)
          b = false;
-    check = bitmap_contains((const struct bitmap *)(*bitmap), (size_t)num1, (size_t)num2, b);
-    printf("%s\n", check ? "true" : "false" );     
+    printf("%u\n", (unsigned int)bitmap_count((const struct bitmap *)(*bitmap), (size_t)num1, (size_t)num2, b));     
 }
 void ibitmap_scan(struct bitmap** bitmap, int num1, int num2, char* boolean)
 {
@@ -508,7 +510,7 @@ void ibitmap_scan(struct bitmap** bitmap, int num1, int num2, char* boolean)
       b = true;
   if(strcmp(boolean, "false") == 0)
       b = false;
-  printf("%d\n", (int)bitmap_scan((const struct bitmap *)(*bitmap), (size_t)num1, (size_t)num2, b));
+  printf("%u\n", (unsigned int)bitmap_scan((const struct bitmap *)(*bitmap), (size_t)num1, (size_t)num2, b));
 }
 void ibitmap_scan_and_flip(struct bitmap** bitmap, int num1, int num2, char* boolean)
 {
@@ -517,7 +519,7 @@ void ibitmap_scan_and_flip(struct bitmap** bitmap, int num1, int num2, char* boo
       b = true;
   if(strcmp(boolean, "false") == 0)
       b = false;
-  printf("%d\n", (int)bitmap_scan_and_flip(*bitmap, (size_t)num1, (size_t)num2, b));
+  printf("%u\n", (unsigned int)bitmap_scan_and_flip(*bitmap, (size_t)num1, (size_t)num2, b));
 
 }
 void ibitmap_set_multiple(struct bitmap** bitmap, int num1, int num2, char* boolean)

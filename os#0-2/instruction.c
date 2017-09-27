@@ -841,8 +841,6 @@ int ins_bitmap_size(int argc, char** argv)
 {
     return bitmap_template_1("bitmap_size", argc, argv,ibitmap_size);    
 }
-
-
 int ins_bitmap_mark(int argc, char** argv)
 {
     return bitmap_template_2("bitmap_mark", argc, argv, ibitmap_mark);
@@ -867,7 +865,7 @@ int ins_bitmap_test(int argc, char** argv)
 
 int ins_bitmap_set_all(int argc, char** argv)
 {
-    return bitmap_template_3("bitmap_mark", argc, argv, ibitmap_set_all);   
+    return bitmap_template_3("bitmap_set_all", argc, argv, ibitmap_set_all);   
 }
 
 
