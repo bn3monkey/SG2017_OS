@@ -153,7 +153,7 @@ void list_delete(struct list** list)
 	*list = NULL;
 }
 
-bool list_less_cmp(struct list_elem *a, struct list_elem *b)
+bool list_less_cmp(struct list_elem *a, struct list_elem *b, void* AUX)
 {
 	return (getValueDL(a) < getValueDL(b));
 }
@@ -165,7 +165,6 @@ bool list_less_cmp(struct list_elem *a, struct list_elem *b)
 void ilist_pop_back(struct list** list)
 {
 	struct list_elem* temp = list_pop_back((*list));
-	DL* popped = getDL(temp);
 	deleteDL(temp);
 }
 void ilist_pop_front(struct list** list)
@@ -237,8 +236,7 @@ void ilist_remove(struct list** list, int index)
 {
 	struct list_elem* temp = list_findi(*list, index);
 	temp = list_pop(temp);
-	DL* popped = getDL(temp);
-	deleteDL(temp);}
+	deleteDL(temp);
 }
 //list_instruction_3
 void ilist_unique(struct list** dest, struct list** sour)
