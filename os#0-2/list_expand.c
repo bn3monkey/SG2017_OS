@@ -116,7 +116,7 @@ void list_print(struct list* list)
 	ASSERT(list!=NULL);
 	if(list_empty(list))
 	{
-		printf("List Empty\n");
+		//printf("List Empty\n");
 		return;
 	}
 	struct list_elem* ptr;
