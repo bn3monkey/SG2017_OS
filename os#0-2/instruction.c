@@ -419,77 +419,77 @@ int list_template_5(const char *ins, int argc, char **argv,
 
 int ins_pop_front(int argc, char** argv)
 {
-    return list_template_1("list_pop_back",argc,argv,);
+    return list_template_1("list_pop_back",argc,argv,ilist_pop_back);
 }
 int ins_pop_end(int argc, char** argv)
 {
-    return list_template_1("list_pop_front",argc,argv,);
+    return list_template_1("list_pop_front",argc,argv,ilist_pop_front);
 }
 int ins_list_front(int argc, char** argv)
 {
-    return list_template_1("list_front",argc,argv,);
+    return list_template_1("list_front",argc,argv,ilist_front);
 }
 int ins_list_back(int argc, char** argv)
 {
-    return list_template_1("list_back",argc,argv,);
+    return list_template_1("list_back",argc,argv,ilist_back);
 }
 int ins_list_size(int argc, char** argv)
 {
-    return list_template_1("list_size",argc,argv,);
+    return list_template_1("list_size",argc,argv,ilist_size);
 }
 int ins_list_empty(int argc, char** argv)
 {
-    return list_template_1("list_empty",argc,argv,);
+    return list_template_1("list_empty",argc,argv,ilist_empty);
 }
 int ins_list_max(int argc, char** argv)
 {
-    return list_template_1("list_max",argc,argv,);
+    return list_template_1("list_max",argc,argv,ilist_max);
 }
 int ins_list_min(int argc, char** argv)
 {
-    return list_template_1("list_min",argc,argv,);
+    return list_template_1("list_min",argc,argv,ilist_min);
 }
 int ins_list_reverse(int argc, char** argv)
 {
-    return list_template_1("list_reverse",argc,argv,);
+    return list_template_1("list_reverse",argc,argv,ilist_reverse);
 }
 int ins_list_sort(int argc, char** argv)
 {
-    return list_template_1("list_sort",argc,argv,);
+    return list_template_1("list_sort",argc,argv,ilist_sort);
 }
 
 //The Template of list instruction 2
 int ins_push_back(int argc, char** argv)
 {
-    return list_template_2("list_push_back",argc,argv,);
+    return list_template_2("list_push_back",argc,argv,ilist_push_back);
 }
 int ins_push_front(int argc, char** argv)
 {
-    return list_template_2("list_push_front",argc,argv,);
+    return list_template_2("list_push_front",argc,argv,ilist_push_back);
 }
 int ins_insert_ordered(int argc, char** argv)
 {
-    return list_template_2("list_insert_ordered",argc,argv,);
+    return list_template_2("list_insert_ordered",argc,argv,ilist_insert_ordered);
 }
 int ins_remove(int argc, char** argv)
 {
-    return list_template_2("list_remove",argc,argv,);
+    return list_template_2("list_remove",argc,argv,ilist_remove);
 }
 
 //The Template of list instruction 3
 int ins_list_unique(int argc, char** argv)
 {
-    return list_template_3("list_unique",argc,argv,);
+    return list_template_3("list_unique",argc,argv,ilist_unique);
 }
 
 //The Template of list instruction 4
 int ins_list_insert(int argc, char** argv)
 {
-    return list_template_4("list_insert",argc,argv,);
+    return list_template_4("list_insert",argc,argv,ilist_insert);
 }
 
 //The Template of list instruction 5
 int ins_list_splice(int argc, char** argv)
 {
-    return list_template_5("list_splice",argc,argv,);
+    return list_template_5("list_splice",argc,argv,ilist_splice);
 }
