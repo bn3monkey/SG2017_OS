@@ -53,7 +53,7 @@ void list_delete(struct list** list);
 void list_new(struct list** list);
 
 //comperator
-bool list_less_cmp(struct list_elem *a, struct list_elem *b, void *AUX);
+bool list_less_cmp(const struct list_elem *a, const struct list_elem *b, void *AUX);
 
 /* For the Shell Instruction */
 

@@ -124,7 +124,7 @@ int shell_integrated(Argument arg)
 }
 int shell_list(Argument arg)
 {
-    temp = temp = STATE_INCOMPLETE;
+    int temp = STATE_INCOMPLETE;
 
     temp = ins_list_pop_front(arc, arv);
     if (temp != 0)

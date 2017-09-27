@@ -153,9 +153,13 @@ void list_delete(struct list** list)
 	*list = NULL;
 }
 
-bool list_less_cmp(struct list_elem *a, struct list_elem *b, void* AUX)
+bool list_less_cmp(const struct list_elem *a, const struct list_elem *b, void* AUX)
 {
-	return (getValueDL(a) < getValueDL(b));
+	ASSERT (a!=NULL && b!=NULL);
+	DL* x = list_entry(a, struct data_listed ,elem);
+	DL* y = list_entry(b, struct data_listed ,elem);
+
+	return (x->value < y->value);
 }
 
 
@@ -170,7 +174,6 @@ void ilist_pop_back(struct list** list)
 void ilist_pop_front(struct list** list)
 {
 	struct list_elem* temp = list_pop_front((*list));
-	DL* popped = getDL(temp);
 	deleteDL(temp);	
 }
 void ilist_front(struct list** list)
