@@ -230,3 +230,266 @@ int ins_quit(int argc, char **argv)
         return STATE_QUIT;
     return STATE_INCOMPLETE;
 }
+
+//The Template of list instruction
+int list_template_1(const char *ins, int argc, char **argv,
+                    void (*listfunc)(struct list **))
+{
+    int number;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 2)
+            return STATE_NOPARAMETER;
+
+        if (samen("list", argv[1]))
+        {
+            number = getNum("list", argv[1]);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (m_list[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            listfunc(&(m_list[number]));
+            return STATE_COMPLETE;
+        }
+    }
+    return STATE_INCOMPLETE;
+}
+
+int list_template_2(const char *ins, int argc, char **argv,
+                    void (*listfunc)(struct list **, int))
+{
+    int number, size;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 3)
+            return STATE_NOPARAMETER;
+
+        if (samen("list", argv[1]))
+        {
+            number = getNum("list", argv[1]);
+            size = parseInt(argv[2], 0, strlen(argv[2]) - 1);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (size == NONUMBER)
+                return STATE_NOINT;
+            if (m_list[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            listfunc(&(m_list[number]), size);
+            return STATE_COMPLETE;
+        }
+
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+int list_template_3(const char *ins, int argc, char **argv,
+                    void (*listfunc)(struct list **, struct list **))
+{
+    int number1, number2;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 3)
+            return STATE_NOPARAMETER;
+
+        if (samen("list", argv[1]))
+        {
+            number1 = getNum("list", argv[1]);
+            if (number1 == NONUMBER)
+                return STATE_NOINT;
+            if (number1 >= 10)
+                return STATE_EXCESSINT;
+            if (m_list[number1] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+            if (samen("list", argv[2]))
+            {
+                number2 = getNum("list", argv[2]);
+                if (number2 == NONUMBER)
+                    return STATE_NOINT;
+                if (number2 >= 10)
+                    return STATE_EXCESSINT;
+                if (m_list[number2] == NULL)
+                    //return STATE_DATANULL;
+                    return STATE_COMPLETE;
+                listfunc(&(m_list[number1]), &(m_list[number2]));
+                return STATE_COMPLETE;
+            }
+            return STATE_NOPARAMETER;
+        }
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+int list_template_4(const char *ins, int argc, char **argv,
+                    void (*listfunc)(struct list **, int, int))
+{
+    int number, size1, size2;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 4)
+            return STATE_NOPARAMETER;
+
+        if (samen("list", argv[1]))
+        {
+            number = getNum("list", argv[1]);
+            size1 = parseInt(argv[2], 0, strlen(argv[2]) - 1);
+            size2 = parseInt(argv[3], 0, strlen(argv[3]) - 1);
+            if (number == NONUMBER)
+                return STATE_NOINT;
+            if (number >= 10)
+                return STATE_EXCESSINT;
+            if (size1 == NONUMBER)
+                return STATE_NOINT;
+            if (size2 == NONUMBER)
+                return STATE_NOINT;
+            if (m_list[number] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            listfunc(&(m_list[number]), size1, size2);
+            return STATE_COMPLETE;
+        }
+
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+int list_template_5(const char *ins, int argc, char **argv,
+                    void (*listfunc)(struct list **, int, struct list **, int, int))
+{
+    int number1, number2, i,j,k;
+    if (same(ins, argv[0]))
+    {
+        if (argc < 6)
+            return STATE_NOPARAMETER;
+
+        if (samen("list", argv[1]))
+        {
+            number1 = getNum("list", argv[1]);
+            i = parseInt(argv[2], 0, strlen(argv[2]) - 1);
+            
+            if (number1 == NONUMBER)
+                return STATE_NOINT;
+            if (number1 >= 10)
+                return STATE_EXCESSINT;
+            if (i == NONUMBER)
+                return STATE_NOINT;
+            if (m_list[number1] == NULL)
+                //return STATE_DATANULL;
+                return STATE_COMPLETE;
+
+            if(samen("list", argv[3]))
+            {
+                number2 = getNum("list", argv[3]);
+                j = parseInt(argv[4], 0, strlen(argv[4]) - 1);
+                k = parseInt(argv[5], 0, strlen(argv[5]) - 1);
+                if (number2 == NONUMBER)
+                     return STATE_NOINT;
+                if (number2 >= 10)
+                     return STATE_EXCESSINT;
+                if (j == NONUMBER)
+                     return STATE_NOINT;
+                if (k == NONUMBER)
+                     return STATE_NOINT;
+
+                listfunc(&(m_list[number1]), i, &(m_list[number2]),j, k);
+                return STATE_COMPLETE;
+            }
+            return STATE_NOPARAMETER;
+        }
+
+        return STATE_NOPARAMETER;
+    }
+    return STATE_INCOMPLETE;
+}
+
+/* instruction_list */
+//The Template of list instruction 1
+
+int ins_pop_front(int argc, char** argv)
+{
+    return list_template_1("list_pop_back",argc,argv,);
+}
+int ins_pop_end(int argc, char** argv)
+{
+    return list_template_1("list_pop_front",argc,argv,);
+}
+int ins_list_front(int argc, char** argv)
+{
+    return list_template_1("list_front",argc,argv,);
+}
+int ins_list_back(int argc, char** argv)
+{
+    return list_template_1("list_back",argc,argv,);
+}
+int ins_list_size(int argc, char** argv)
+{
+    return list_template_1("list_size",argc,argv,);
+}
+int ins_list_empty(int argc, char** argv)
+{
+    return list_template_1("list_empty",argc,argv,);
+}
+int ins_list_max(int argc, char** argv)
+{
+    return list_template_1("list_max",argc,argv,);
+}
+int ins_list_min(int argc, char** argv)
+{
+    return list_template_1("list_min",argc,argv,);
+}
+int ins_list_reverse(int argc, char** argv)
+{
+    return list_template_1("list_reverse",argc,argv,);
+}
+int ins_list_sort(int argc, char** argv)
+{
+    return list_template_1("list_sort",argc,argv,);
+}
+
+//The Template of list instruction 2
+int ins_push_back(int argc, char** argv)
+{
+    return list_template_2("list_push_back",argc,argv,);
+}
+int ins_push_front(int argc, char** argv)
+{
+    return list_template_2("list_push_front",argc,argv,);
+}
+int ins_insert_ordered(int argc, char** argv)
+{
+    return list_template_2("list_insert_ordered",argc,argv,);
+}
+int ins_remove(int argc, char** argv)
+{
+    return list_template_2("list_remove",argc,argv,);
+}
+
+//The Template of list instruction 3
+int ins_list_unique(int argc, char** argv)
+{
+    return list_template_3("list_unique",argc,argv,);
+}
+
+//The Template of list instruction 4
+int ins_list_insert(int argc, char** argv)
+{
+    return list_template_4("list_insert",argc,argv,);
+}
+
+//The Template of list instruction 5
+int ins_list_splice(int argc, char** argv)
+{
+    return list_template_5("list_splice",argc,argv,);
+}

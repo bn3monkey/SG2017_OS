@@ -124,6 +124,59 @@ int shell_integrated(Argument arg)
 }
 int shell_list(Argument arg)
 {
+    temp = temp = STATE_INCOMPLETE;
+
+    temp = ins_list_pop_front(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_pop_end(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_front(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_back(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_size(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_empty(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_max(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_min(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_reverse(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_sort(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_push_back(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_push_front(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_insert_ordered(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_remove(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_unique(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_insert(arc, arv);
+    if (temp != 0)
+        return temp;
+    temp = ins_list_splice(arc, arv);
+    if (temp != 0)
+        return temp;
     return STATE_INCOMPLETE;
 }
 int shell_hash(Argument arg)

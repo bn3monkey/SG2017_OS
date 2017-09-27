@@ -30,3 +30,27 @@ int ins_create(int argc, char** argv);
 int ins_delete(int argc, char** argv);
 int ins_dumpdata(int argc, char** argv);
 int ins_quit(int argc, char** argv);
+
+
+/* instruction_list */
+int ins_list_pop_front(int argc, char** argv);
+int ins_list_pop_end(int argc, char** argv);
+int ins_list_front(int argc, char** argv);
+int ins_list_back(int argc, char** argv);
+int ins_list_size(int argc, char** argv);
+int ins_list_empty(int argc, char** argv);
+int ins_list_max(int argc, char** argv);
+int ins_list_min(int argc, char** argv);
+int ins_list_reverse(int argc, char** argv);
+int ins_list_sort(int argc, char** argv);
+
+int ins_list_push_back(int argc, char** argv);
+int ins_list_push_front(int argc, char** argv);
+int ins_list_insert_ordered(int argc, char** argv);
+int ins_list_remove(int argc, char** argv);
+
+int ins_list_unique(int argc, char** argv);
+
+int ins_list_insert(int argc, char** argv);
+
+int ins_list_splice(int argc, char** argv);

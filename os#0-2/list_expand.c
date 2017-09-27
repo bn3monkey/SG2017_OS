@@ -61,6 +61,21 @@ struct data_listed* setRandomDL(struct list_elem *elem)
 	return temp;
 }
 
+//Find the element of list which corresponding to list
+struct list_elem* list_findi(struct list* list, int index)
+{
+	ASSERT(list!=NULL);
+	ASSERT(!(list_empty(list)));
+	struct list_elem* ptr;
+	struct list_elem* end;
+	end = list_end(list);
+	for(ptr = list_begin(list);ptr!=end;ptr = list_next(ptr))
+	{
+		if(index--)
+			return ptr;	
+	}
+	return NULL;
+}
 
 //Find the element of list
 struct list_elem* list_find(struct list* list, int data)
@@ -144,4 +159,110 @@ bool list_less_cmp(struct list_elem *a, struct list_elem *b)
 }
 
 
+/* For the Shell Instruction */
+
+//list_instruction_1
+void ilist_pop_back(struct list** list)
+{
+	list_elem* temp = list_pop_back((*list));
+	DL* popped = getDL(temp);
+	deleteDL(temp);
+}
+void ilist_pop_front(struct list** list)
+{
+	list_elem* temp = list_pop_front((*list));
+	DL* popped = getDL(temp);
+	deleteDL(temp);	
+}
+void ilist_front(struct list** list)
+{
+	list_elem* temp = list_front((*list));
+	list_elemprint(temp);
+	printf("\n");	
+}
+void ilist_back(struct list** list)
+{
+	list_elem* temp = list_back((*list));
+	list_elemprint(temp);
+	printf("\n");
+}
+void ilist_size(struct list** list)
+{
+	printf("%d",(int)list_size((*list)));
+	printf("\n");
+}
+void ilist_empty(struct list** list)
+{
+	printf("%s", list_empty((*list)) ? "true":"false");
+	printf("\n");
+}
+void ilist_max(struct list** list)
+{
+	list_elem* temp = list_max(*list, list_less_cmp, NULL);
+	printf("%d", getValueDL(temp));
+	printf("\n");
+}
+void ilist_min(struct list** list)
+{
+	list_elem* temp = list_min(*list, list_less_cmp, NULL);
+	printf("%d", getValueDL(temp));
+	printf("\n");
+}
+void ilist_reverse(struct list** list)
+{
+	list_reverse(*list);
+}
+void ilist_sort(struct list** list)
+{
+	list_sort(*list, list_less_cmp, NULL);
+}
+
+//list_instruction_2
+void ilist_push_back(struct list** list,int value)
+{
+	DL* temp = newDL(value);
+	list_push_back(*list,&(temp->elem));
+}
+void ilist_push_front(struct list** list,int value)
+{
+	DL* temp = newDL(value);
+	list_push_front(*list,&(temp->elem));
+}
+void ilist_insert_ordered(struct list** list,int value)
+{
+	DL* temp = newDL(value);
+	list_insert_ordered(*list, &(temp->elem), list_less_cmp, NULL); 
+}
+void ilist_remove(struct list** list, int index)
+{
+	list_elem* temp = list_findi(*list, index);
+	temp = list_pop(temp);
+	DL* popped = getDL(temp);
+	deleteDL(temp);}
+}
+//list_instruction_3
+void ilist_unique(struct list** dest, struct list** sour)
+{
+	list_unique(*sour, *dest, list_less_cmp, NULL);
+}
+
+//list_instruction_4
+void ilist_insert(struct list** list, int index, int value)
+{
+	list_elem* temp = list_findi(*list, index);
+	temp = temp->prev;
+	DL* inserted = newDL(value);
+	list_insert(temp, &(inserted->elem));
+}
+
+//list_instruction_5
+void ilist_splice(struct list** dest, int index, struct list** sour, int start, int end)
+{
+	list_elem* before = list_findi(*dest, index);
+	before = before->prev;
+	list_elem* first = list_findi(*sour, start);
+	list_elem* last = list_findi(*sour, end);
+
+	list_splice(before, first, last);
+}
 
