@@ -247,6 +247,7 @@ void ilist_unique(struct list** dest, struct list** sour)
 	if(*sour == NULL)
 	{
 		struct list temp;
+		list_init(&temp);
 		list_unique(*dest, &temp, list_less_cmp, NULL);
 	}
 	else
