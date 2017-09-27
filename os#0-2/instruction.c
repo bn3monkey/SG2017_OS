@@ -152,7 +152,7 @@ static int template_2(const char *ins, int argc, char **argv,
 static int template_3(const char *ins, int argc, char **argv,
                       void (*listfunc)(struct list *),
                       void (*hashfunc)(struct hash *),
-                      void (*bitmapfunc)(const struct bitmap *))
+                      void (*bitmapfunc)(struct bitmap *))
 {
     int number;
     if (same(ins, argv[0]))
@@ -168,8 +168,10 @@ static int template_3(const char *ins, int argc, char **argv,
             if (number >= 10)
                 return STATE_EXCESSINT;
             if(m_list[number] == NULL)
-                return STATE_DATANULL;
-            listfunc((m_list[number]));
+                //return STATE_DATANULL;
+            	return STATE_COMPLETE;
+
+	    listfunc((m_list[number]));
             return STATE_COMPLETE;
         }
         else if (samen("hash", argv[1]))
@@ -181,8 +183,10 @@ static int template_3(const char *ins, int argc, char **argv,
                 return STATE_EXCESSINT;
 
             if(m_hash[number] == NULL)
-                return STATE_DATANULL;
-            hashfunc((m_hash[number]));
+                //return STATE_DATANULL;
+            	return STATE_COMPLETE;
+
+	    hashfunc((m_hash[number]));
             return STATE_COMPLETE;
         }
         else if (samen("bm", argv[1]))
@@ -195,7 +199,9 @@ static int template_3(const char *ins, int argc, char **argv,
                 return STATE_EXCESSINT;
 
             if(m_bitmap[number] == NULL)
-                return STATE_DATANULL;
+		//return STATE_DATANULL;
+		return STATE_COMPLETE;
+
             bitmapfunc((m_bitmap[number]));
             return STATE_COMPLETE;
         }

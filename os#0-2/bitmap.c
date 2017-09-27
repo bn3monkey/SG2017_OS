@@ -402,7 +402,7 @@ void bitmap_print(struct bitmap * bitmap)
     int i;
     for(i=0;i<bitmap->bit_cnt;i++)
     {
-      printf("%d", (*(bitmap->bits) >> i) & 1);
+      printf("%d", (int)((*(bitmap->bits) >> i) & 1));
     }
     printf("\n");
 }
