@@ -164,25 +164,25 @@ bool list_less_cmp(struct list_elem *a, struct list_elem *b)
 //list_instruction_1
 void ilist_pop_back(struct list** list)
 {
-	list_elem* temp = list_pop_back((*list));
+	struct list_elem* temp = list_pop_back((*list));
 	DL* popped = getDL(temp);
 	deleteDL(temp);
 }
 void ilist_pop_front(struct list** list)
 {
-	list_elem* temp = list_pop_front((*list));
+	struct list_elem* temp = list_pop_front((*list));
 	DL* popped = getDL(temp);
 	deleteDL(temp);	
 }
 void ilist_front(struct list** list)
 {
-	list_elem* temp = list_front((*list));
+	struct list_elem* temp = list_front((*list));
 	list_elemprint(temp);
 	printf("\n");	
 }
 void ilist_back(struct list** list)
 {
-	list_elem* temp = list_back((*list));
+	struct list_elem* temp = list_back((*list));
 	list_elemprint(temp);
 	printf("\n");
 }
@@ -198,13 +198,13 @@ void ilist_empty(struct list** list)
 }
 void ilist_max(struct list** list)
 {
-	list_elem* temp = list_max(*list, list_less_cmp, NULL);
+	struct list_elem* temp = list_max(*list, list_less_cmp, NULL);
 	printf("%d", getValueDL(temp));
 	printf("\n");
 }
 void ilist_min(struct list** list)
 {
-	list_elem* temp = list_min(*list, list_less_cmp, NULL);
+	struct list_elem* temp = list_min(*list, list_less_cmp, NULL);
 	printf("%d", getValueDL(temp));
 	printf("\n");
 }
@@ -235,7 +235,7 @@ void ilist_insert_ordered(struct list** list,int value)
 }
 void ilist_remove(struct list** list, int index)
 {
-	list_elem* temp = list_findi(*list, index);
+	struct list_elem* temp = list_findi(*list, index);
 	temp = list_pop(temp);
 	DL* popped = getDL(temp);
 	deleteDL(temp);}
@@ -249,7 +249,7 @@ void ilist_unique(struct list** dest, struct list** sour)
 //list_instruction_4
 void ilist_insert(struct list** list, int index, int value)
 {
-	list_elem* temp = list_findi(*list, index);
+	struct list_elem* temp = list_findi(*list, index);
 	temp = temp->prev;
 	DL* inserted = newDL(value);
 	list_insert(temp, &(inserted->elem));
@@ -258,10 +258,10 @@ void ilist_insert(struct list** list, int index, int value)
 //list_instruction_5
 void ilist_splice(struct list** dest, int index, struct list** sour, int start, int end)
 {
-	list_elem* before = list_findi(*dest, index);
+	struct list_elem* before = list_findi(*dest, index);
 	before = before->prev;
-	list_elem* first = list_findi(*sour, start);
-	list_elem* last = list_findi(*sour, end);
+	struct list_elem* first = list_findi(*sour, start);
+	struct list_elem* last = list_findi(*sour, end);
 
 	list_splice(before, first, last);
 }
