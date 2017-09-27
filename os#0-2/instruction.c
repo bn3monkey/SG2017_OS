@@ -417,11 +417,11 @@ int list_template_5(const char *ins, int argc, char **argv,
 /* instruction_list */
 //The Template of list instruction 1
 
-int ins_pop_front(int argc, char** argv)
+int ins_list_pop_front(int argc, char** argv)
 {
     return list_template_1("list_pop_back",argc,argv,ilist_pop_back);
 }
-int ins_pop_end(int argc, char** argv)
+int ins_list_pop_end(int argc, char** argv)
 {
     return list_template_1("list_pop_front",argc,argv,ilist_pop_front);
 }
@@ -459,19 +459,19 @@ int ins_list_sort(int argc, char** argv)
 }
 
 //The Template of list instruction 2
-int ins_push_back(int argc, char** argv)
+int ins_list_push_back(int argc, char** argv)
 {
     return list_template_2("list_push_back",argc,argv,ilist_push_back);
 }
-int ins_push_front(int argc, char** argv)
+int ins_list_push_front(int argc, char** argv)
 {
     return list_template_2("list_push_front",argc,argv,ilist_push_back);
 }
-int ins_insert_ordered(int argc, char** argv)
+int ins_list_insert_ordered(int argc, char** argv)
 {
     return list_template_2("list_insert_ordered",argc,argv,ilist_insert_ordered);
 }
-int ins_remove(int argc, char** argv)
+int ins_list_remove(int argc, char** argv)
 {
     return list_template_2("list_remove",argc,argv,ilist_remove);
 }
