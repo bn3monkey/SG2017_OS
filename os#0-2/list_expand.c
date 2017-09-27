@@ -244,7 +244,7 @@ void ilist_remove(struct list** list, int index)
 //list_instruction_3
 void ilist_unique(struct list** dest, struct list** sour)
 {
-	list_unique(*sour, *dest, list_less_cmp, NULL);
+	list_unique(*dest, *sour, list_less_cmp, NULL);
 }
 
 //list_instruction_4
