@@ -465,7 +465,7 @@ int ins_list_push_back(int argc, char** argv)
 }
 int ins_list_push_front(int argc, char** argv)
 {
-    return list_template_2("list_push_front",argc,argv,ilist_push_back);
+    return list_template_2("list_push_front",argc,argv,ilist_push_front);
 }
 int ins_list_insert_ordered(int argc, char** argv)
 {
