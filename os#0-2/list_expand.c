@@ -238,6 +238,7 @@ void ilist_insert_ordered(struct list** list,int value)
 void ilist_remove(struct list** list, int index)
 {
 	struct list_elem* temp = list_findi(*list, index);
+	printf("popped : %d\n", getValueDL(temp));
 	temp = list_pop(temp);
 	deleteDL(temp);
 }
