@@ -52,5 +52,6 @@ int ins_list_remove(int argc, char** argv);
 int ins_list_unique(int argc, char** argv);
 
 int ins_list_insert(int argc, char** argv);
+int ins_list_swap(int argc, char ** argv);
 
 int ins_list_splice(int argc, char** argv);

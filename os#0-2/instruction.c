@@ -487,6 +487,11 @@ int ins_list_insert(int argc, char** argv)
 {
     return list_template_4("list_insert",argc,argv,ilist_insert);
 }
+int ins_list_swap(int argc, char ** argv)
+{
+    return list_template_4("list_swap",argc,argv,ilist_swap);
+}
+
 
 //The Template of list instruction 5
 int ins_list_splice(int argc, char** argv)

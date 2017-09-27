@@ -80,6 +80,7 @@ void ilist_unique(struct list** dest, struct list** sour);
 
 //list_instruction_4
 void ilist_insert(struct list** list, int index, int value);
+void ilist_swap(struct list** list, int index1, int index2);
 
 //list_instruction_5
 void ilist_splice(struct list** dest, int index, struct list** sour, int start, int end);

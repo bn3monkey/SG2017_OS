@@ -174,6 +174,9 @@ int shell_list(Argument arg)
     temp = ins_list_insert(arc, arv);
     if (temp != 0)
         return temp;
+    temp = ins_list_swap(arc, arv);
+    if (temp != 0)
+        return temp;
     temp = ins_list_splice(arc, arv);
     if (temp != 0)
         return temp;

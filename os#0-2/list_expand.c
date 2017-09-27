@@ -255,6 +255,12 @@ void ilist_insert(struct list** list, int index, int value)
 	DL* inserted = newDL(value);
 	list_insert(temp, &(inserted->elem));
 }
+void ilist_swap(struct list** list, int index1, int index2)
+{
+	struct list_elem* temp1 = list_findi(*list, index1);
+	struct list_elem* temp2 = list_findi(*list, index2);
+	list_swap(temp1, temp2);
+}
 
 //list_instruction_5
 void ilist_splice(struct list** dest, int index, struct list** sour, int start, int end)
