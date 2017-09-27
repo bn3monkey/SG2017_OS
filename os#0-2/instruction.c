@@ -311,8 +311,11 @@ int list_template_3(const char *ins, int argc, char **argv,
                 //return STATE_DATANULL;
                 return STATE_COMPLETE;
             
-            if(same("list_unique",argv[0]) && argc == 2)
+            if(argc == 2)
+            {
                 listfunc(&(m_list[number1]), NULL);
+                return STATE_COMPLETE;
+            }
 
             if (argc < 3)
                 return STATE_NOPARAMETER;

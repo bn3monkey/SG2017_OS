@@ -65,25 +65,31 @@ struct data_listed* setRandomDL(struct list_elem *elem)
 struct list_elem* list_findi(struct list* list, int index)
 {
 	ASSERT(list!=NULL);
-	ASSERT(!(list_empty(list)));
 	struct list_elem* ptr;
 	struct list_elem* end;
+
 	end = list_end(list);
+	if(list_empty(list) && index == 0)
+		return end;
+
 	for(ptr = list_begin(list);ptr!=end;ptr = list_next(ptr))
 	{
 		if(!(index--))
 			return ptr;	
 	}
-	return NULL;
+	if(!index)
+		return ptr;
+	else
+		return NULL;
 }
 
 //Find the element of list
 struct list_elem* list_find(struct list* list, int data)
 {
 	ASSERT(list!=NULL);
-	ASSERT(!(list_empty(list)));
 	struct list_elem* ptr;
 	struct list_elem* end;
+
 	end = list_end(list);
 	for(ptr = list_begin(list);ptr!=end;ptr = list_next(ptr))
 	{
@@ -238,15 +244,18 @@ void ilist_insert_ordered(struct list** list,int value)
 void ilist_remove(struct list** list, int index)
 {
 	struct list_elem* temp = list_findi(*list, index);
+	if(temp==NULL)
+		return;
 	temp = list_pop(temp);
 	deleteDL(temp);
 }
 //list_instruction_3
 void ilist_unique(struct list** dest, struct list** sour)
 {
-	if(*sour == NULL)
+	if(sour == NULL)
 	{
 		struct list* temp;
+		temp = NULL;
 		list_new(&temp);
 		list_unique(*dest, temp, list_less_cmp, NULL);
 		list_delete(&temp);
@@ -259,14 +268,20 @@ void ilist_unique(struct list** dest, struct list** sour)
 void ilist_insert(struct list** list, int index, int value)
 {
 	struct list_elem* temp = list_findi(*list, index);
-	temp = temp->prev;
+	if(temp==NULL)
+		return;
+	//temp = temp->prev;
 	DL* inserted = newDL(value);
 	list_insert(temp, &(inserted->elem));
 }
 void ilist_swap(struct list** list, int index1, int index2)
 {
 	struct list_elem* temp1 = list_findi(*list, index1);
+	if(temp1==NULL)
+		return;
 	struct list_elem* temp2 = list_findi(*list, index2);
+	if(temp2==NULL)
+		return;
 	list_swap(temp1, temp2);
 }
 
@@ -274,9 +289,15 @@ void ilist_swap(struct list** list, int index1, int index2)
 void ilist_splice(struct list** dest, int index, struct list** sour, int start, int end)
 {
 	struct list_elem* before = list_findi(*dest, index);
-	before = before->prev;
+	if(before==NULL)
+		return;
+	//before = before->prev;
 	struct list_elem* first = list_findi(*sour, start);
+	if(first==NULL)
+		return;
 	struct list_elem* last = list_findi(*sour, end);
+	if(last==NULL)
+		return;
 
 	list_splice(before, first, last);
 }

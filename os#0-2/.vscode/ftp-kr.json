@@ -1,0 +1,27 @@
+{
+    "host": "bn3monkey.cloudapp.net",
+    "username": "bn3monkey",
+    "remotePath": "/home/bn3monkey/OS/os/os#0-2",
+    "protocol": "sftp",
+    "password": "gkawjd7103!@",
+    "port": 22,
+    "fileNameEncoding": "utf8",
+    "ignoreWrongFileEncoding": false,
+    "createSyncCache": true,
+    "autoUpload": true,
+    "autoDelete": false,
+    "autoDownload": false,
+    "disableFtp": false,
+    "ignore": [
+        "/.git",
+        "/.vscode/chrome",
+        "/.vscode/.key",
+        "/.vscode/ftp-kr.task.json",
+        "/.vscode/ftp-kr.error.log",
+        "/.vscode/ftp-kr.sync.*.json"
+    ],
+    "closure": {
+        "create_source_map": "%js_output_file%.map",
+        "output_wrapper": "%output%\n//# sourceMappingURL=%js_output_file_filename%.map"
+    }
+}
