@@ -2,6 +2,14 @@
 
 int main()
 {
+	
+
+	Cycle();
+
+	return 0;
+}
+
+/*
 	int i;
 	DL* dltemp;
 	DH* dhtemp;
@@ -53,9 +61,4 @@ int main()
 	hash_print(m_hash[0]);
 	
 	hash_terminate(&m_hash[0]);
-
-
-	Cycle();
-
-	return 0;
-}
+	*/
