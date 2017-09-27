@@ -297,7 +297,7 @@ int list_template_3(const char *ins, int argc, char **argv,
     int number1, number2;
     if (same(ins, argv[0]))
     {
-        if (argc < 3)
+        if (argc < 2)
             return STATE_NOPARAMETER;
 
         if (samen("list", argv[1]))
@@ -313,6 +313,9 @@ int list_template_3(const char *ins, int argc, char **argv,
             
             if(same("list_unique",argv[1]) && argc == 2)
                 listfunc(&(m_list[number1]), NULL);
+
+            if (argc < 3)
+                return STATE_NOPARAMETER;
 
             if (samen("list", argv[2]))
             {
