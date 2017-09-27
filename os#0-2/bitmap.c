@@ -382,6 +382,7 @@ struct bitmap *bitmap_expand(struct bitmap *bitmap, int size)
 	return NULL;
 }
 
+
 void bitmap_new(struct bitmap **bitmap, size_t bit_cnt)
 {
   if(bitmap != NULL)
@@ -395,4 +396,13 @@ void bitmap_delete(struct bitmap **bitmap)
     bitmap_destroy(*bitmap);
     *bitmap = NULL;
   }
+}
+void bitmap_print(struct bitmap * bitmap)
+{
+    int i;
+    for(i=0;i<bitmap->bit_cnt;i++)
+    {
+      printf("%d", (*(bitmap->bits) >> i) & 1);
+    }
+    printf("\n");
 }

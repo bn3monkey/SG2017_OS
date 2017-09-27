@@ -216,7 +216,7 @@ int ins_delete(int argc, char **argv)
 }
 int ins_dumpdata(int argc, char **argv)
 {
-    return template_3("dumpdata", argc, argv, list_print, hash_print, bitmap_dump);
+    return template_3("dumpdata", argc, argv, list_print, hash_print, bitmap_print);
 }
 int ins_quit(int argc, char **argv)
 {

@@ -51,6 +51,8 @@ void bitmap_dump (const struct bitmap *);
 //proj #0-2
 struct bitmap *bitmap_expand(struct bitmap *bitmap, int size);
 
+/* Expand */
 void bitmap_new(struct bitmap **bitmap, size_t bit_cnt);
 void bitmap_delete(struct bitmap **bitmap);
+void bitmap_print(struct bitmap *bitmap);
 #endif /* lib/kernel/bitmap.h */
