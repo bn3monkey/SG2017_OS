@@ -531,3 +531,4 @@ void ibitmap_set_multiple(struct bitmap** bitmap, int num1, int num2, char* bool
        b = false;
     bitmap_set_multiple(*bitmap, (size_t)num1, (size_t)num2, b);
 }
+

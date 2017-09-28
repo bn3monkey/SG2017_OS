@@ -94,3 +94,4 @@ int ins_bitmap_count(int argc, char** argv);
 int ins_bitmap_scan(int argc, char** argv);
 int ins_bitmap_scan_and_flip(int argc, char** argv);
 int ins_bitmap_set_multiple(int argc, char** argv);
+

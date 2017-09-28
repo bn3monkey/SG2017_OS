@@ -1,12 +1,15 @@
 #include "shell.h"
 #include <stdio.h>
 
+//#define WHILE_LIMIT
+
 //Main Program Cycle
 void Cycle()
 {
     int state;
     Argument arg;
 
+    srand(time(NULL));
     for(state=0;state<10;state++)
     {
         m_list[state] = NULL;
@@ -63,6 +66,14 @@ void Cycle()
             }
         }
         DeleteCommand(&arg);
+
+	#ifdef WHILE_LIMIT
+	int count;
+	count=0;
+	count++;
+	if(count >= 10000)
+		return;
+	#endif
     }
 }
 //Input using stdin and Make Argument
@@ -75,6 +86,7 @@ Argument NewCommand()
     while (true)
     {
         fgets(buf, 1000, stdin);
+	buf[strlen(buf)-1] = '\0';
         if (tokenize(&temp.argc, &temp.argv, buf) != INVALIDCMD)
             break;
         deletetokenized(&(temp.argc), &(temp.argv));

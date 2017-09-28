@@ -907,3 +907,4 @@ int ins_bitmap_set_multiple(int argc, char** argv)
 {
     return bitmap_template_6("bitmap_set_multiple", argc, argv, ibitmap_set_multiple); 
 }
+

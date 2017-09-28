@@ -210,3 +210,4 @@ void ihash_apply(struct hash** hash, char* cmd)
 		hash_apply(*hash, hash_action_triple);		
 	}
 }
+
