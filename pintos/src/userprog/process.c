@@ -92,6 +92,7 @@ start_process(void *file_name_)
    does nothing. */
 int process_wait(tid_t child_tid UNUSED)
 {
+  while(true){}
   return -1;
 }
 
@@ -565,6 +566,11 @@ static bool construct_ESP(void **esp, int argc, char **argv)
 
   free(argv_esp);
 
+  hex_dump(new_esp, new_esp, esp - new_esp, true);
+
   *esp = new_esp;
+
+
+
   return true;
 }
