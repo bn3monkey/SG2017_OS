@@ -17,6 +17,7 @@
 #include "threads/palloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "threads/malloc.h"
 
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
@@ -217,7 +218,7 @@ bool load(const char *file_name, void (**eip)(void), void **esp)
   bool success = false;
   int i;
 
-  int argc;
+  int argc = 0;
   char **argv = NULL;
   char *oristr = NULL;
 
@@ -232,7 +233,7 @@ bool load(const char *file_name, void (**eip)(void), void **esp)
   oristr = (char *)malloc(strlen(file_name) + 1);
   if (oristr == NULL)
     goto done;
-  strlcpy(oristr, file_name, sizeof(filename));
+  strlcpy(oristr, file_name, strlen(file_name));
   if (parse_filename(oristr, &argc, &argv))
   {
     goto done;
@@ -493,7 +494,7 @@ static bool parse_filename(char *str, int *argc, char ***argv)
   char *token, *save_ptr;
 
   //Set first token
-  token = strtok_r(s, " ", &save_ptr);
+  token = strtok_r(str, " ", &save_ptr);
   if (token == NULL)
     return false;
   else
@@ -508,7 +509,7 @@ static bool parse_filename(char *str, int *argc, char ***argv)
   for (; token != NULL;
        token = strtok_r(NULL, " ", &save_ptr))
   {
-        *argv = (char **)realloc(*argv, sizeof(char *)*(++(*argc));
+        *argv = (char **)realloc(*argv, sizeof(char *)*(++(*argc)));
         if(*argv == NULL)
           return false;
         (*argv)[(*argc)-1] = token;
@@ -517,7 +518,7 @@ static bool parse_filename(char *str, int *argc, char ***argv)
   return true;
 }
 
-#define BACKWARD_ESP(TYPE, ESP, VALUE) *(--((TYPE *)ESP)) = (VALUE);
+#define BACKWARD_ESP(TYPE, ESP, VALUE) ((TYPE *)ESP--);*(((TYPE *)ESP))=(VALUE)
 static bool construct_ESP(void **esp, int argc, char **argv)
 {
   int i, j, len, alllen;
@@ -566,7 +567,7 @@ static bool construct_ESP(void **esp, int argc, char **argv)
 
   free(argv_esp);
 
-  hex_dump(new_esp, new_esp, esp - new_esp, true);
+  hex_dump((unsigned int)new_esp, new_esp, (size_t)((int *)esp - (int *)new_esp), true);
 
   *esp = new_esp;
 
