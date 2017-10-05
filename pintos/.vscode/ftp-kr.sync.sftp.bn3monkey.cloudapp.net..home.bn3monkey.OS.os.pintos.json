@@ -1,0 +1,26 @@
+{
+    "type": "d",
+    "name": "",
+    "size": 0,
+    "files": [
+        {
+            "type": "d",
+            "name": "src",
+            "size": 4096,
+            "files": [
+                {
+                    "type": "d",
+                    "name": "userprog",
+                    "size": 0,
+                    "files": [
+                        {
+                            "type": "-",
+                            "name": "process.c",
+                            "size": 14737
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
