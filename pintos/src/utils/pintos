@@ -128,8 +128,8 @@ Usage: pintos [OPTION...] -- [ARGUMENT...]
 where each OPTION is one of the following options
   and each ARGUMENT is passed to Pintos kernel verbatim.
 Simulator selection:
-  --qemu                  (default) Use QEMU as simulator
-  --bochs                   Use Bochs as simulator
+  --bochs                  (default) Use Bochs as simulator
+  --qemu                   Use QEMU as simulator
   --player                 Use VMware Player as simulator
 Debugger selection:
   --no-debug               (default) No debugger
