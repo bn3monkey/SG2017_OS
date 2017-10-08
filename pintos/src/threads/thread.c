@@ -74,7 +74,7 @@ static tid_t allocate_tid (void);
 
 static inline void alertAllThread(const char* name)
 {
-  printf("%s's child\n",name);
+  printf("%s's all thread\n",name);
 
   struct list_elem* e;
   for (e = list_begin (&all_list); e != list_end (&all_list);
@@ -95,7 +95,7 @@ static inline void alertChildThread(struct thread* parent)
 {
   if(parent==NULL)
     return;
-    printf("%s's all thread\n",parent->name);
+    printf("%s's child thread\n",parent->name);
 
   struct list_elem* e;
   struct list* childlist = &(parent->list_child);
@@ -246,10 +246,14 @@ thread_create (const char *name, int priority,
 
   /* Start Added Context of Project 1 */
   //Make the thread the child of current thread.
-  struct thread* current = thread_current(); 
+  struct thread* current = thread_current();
+  
+  #ifdef DEBUGTHREAD 
   alertThread("thread_create : parent",current);
   alertThread("thread_create : child", t);
-  if(current != t)
+  #endif
+  
+  if(current->tid != t->tid)
     list_push_back(&(current->list_child), &(t->elem_child));
   /* End Added Context of Project 1 */
 
@@ -345,8 +349,11 @@ thread_current (void)
 
   ASSERT (is_thread (t));
   
+  #ifdef DEBUGTHREAD
   if(t->status != THREAD_RUNNING)
     alertThread("there is no running thread",t);
+  #endif
+
   ASSERT (t->status == THREAD_RUNNING);
   
   return t;
@@ -374,11 +381,14 @@ thread_exit (void)
      and schedule another process.  That process will destroy us
      when it calls thread_schedule_tail(). */
   struct thread* current = thread_current();
+  #ifdef DEBUGTHREAD
   alertThread("thread_exit", current);
-  
-  /* Start Added Context of Project 1 */
+  #endif
 
+  /* Start Added Context of Project 1 */
+  #ifdef DEBUGTHREAD
    alertThread("thread_exit when current", current);
+  #endif
 
    // Free deallocate all of the content that is added at Project 1
    //activate all the child's exit and waiting that parent is dead

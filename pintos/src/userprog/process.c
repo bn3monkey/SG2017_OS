@@ -105,7 +105,11 @@ int process_wait(tid_t child_tid UNUSED)
 void process_exit(void)
 {
   struct thread *cur = thread_current();
+  
+  #ifdef DEBUGTHREAD
   alertThread("process_exit", cur);
+  #endif
+  
   uint32_t *pd;
 
   /* Destroy the current process's page directory and switch back
@@ -132,7 +136,10 @@ void process_exit(void)
 void process_activate(void)
 {
   struct thread *t = thread_current();
+  
+  //#ifdef DEBUGTHREAD
   //alertThread("process_activate", t);
+  //#endif DEBUGTHREAD
 
   /* Activate thread's page tables. */
   pagedir_activate(t->pagedir);
