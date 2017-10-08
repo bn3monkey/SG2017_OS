@@ -50,6 +50,16 @@ sema_init (struct semaphore *sema, unsigned value)
   list_init (&sema->waiters);
 }
 
+
+/* Start Added Context of Project 1 */
+void
+sema_init_wait (struct semaphore *sema)
+{
+  sema_init(sema,0);
+}
+
+/* End Added Context of Project 1 */
+
 /* Down or "P" operation on a semaphore.  Waits for SEMA's value
    to become positive and then atomically decrements it.
 
@@ -180,6 +190,7 @@ lock_init (struct lock *lock)
   lock->holder = NULL;
   sema_init (&lock->semaphore, 1);
 }
+
 
 /* Acquires LOCK, sleeping until it becomes available if
    necessary.  The lock must not already be held by the current

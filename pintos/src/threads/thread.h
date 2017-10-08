@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -74,13 +75,15 @@ typedef int tid_t;
    the `magic' member of the running thread's `struct thread' is
    set to THREAD_MAGIC.  Stack overflow will normally change this
    value, triggering the assertion. */
+
 /* The `elem' member has a dual purpose.  It can be an element in
    the run queue (thread.c), or it can be an element in a
    semaphore wait list (synch.c).  It can be used these two ways
    only because they are mutually exclusive: only a thread in the
    ready state is on the run queue, whereas only a thread in the
    blocked state is on a semaphore wait list. */
-struct thread
+
+  struct thread
   {
     /* Owned by thread.c. */
     tid_t tid;                          /* Thread identifier. */
@@ -92,6 +95,15 @@ struct thread
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
+
+    /* Start Added Context of Project 1 */
+    struct list_elem elem_child; /* List element for child of this thread */
+    struct list list_child; /* the list of child thread */
+
+    struct semaphore wait_sema; /* To lock for using the parent's wait! */
+    struct semaphore exit_sema; /* To exit for using the parent's exit! */
+
+    /* End Added Context of Project 1 */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -137,5 +149,14 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+
+/* Start Added Context of Project 1 */
+struct thread* getChild_byElem(struct list_elem* elem);
+
+struct thread* getChild_byList(struct thread* t, tid_t tid);
+
+void alertThread(const char* debugmsg, struct thread* t);
+/* End Added Context of Project 1 */
 
 #endif /* threads/thread.h */

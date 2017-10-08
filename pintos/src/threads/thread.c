@@ -71,6 +71,65 @@ static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
+
+static inline void alertAllThread(const char* name)
+{
+  printf("%s's child\n",name);
+
+  struct list_elem* e;
+  for (e = list_begin (&all_list); e != list_end (&all_list);
+     e = list_next (e))
+   {
+     struct thread *t = list_entry (e, struct thread, allelem);
+     printf("tid : %d , name : %s status : ", t->tid, t->name);
+     switch(t->status)
+     {
+       case 0 : printf("THREAD_RUNNING\n"); break;
+       case 1 : printf("THREAD_READY\n"); break;
+       case 2 : printf("THREAD_BLOCKED\n"); break;
+       case 3 : printf("THREAD_DYING\n"); break;
+     }
+    }  
+}
+static inline void alertChildThread(struct thread* parent)
+{
+  if(parent==NULL)
+    return;
+    printf("%s's all thread\n",parent->name);
+
+  struct list_elem* e;
+  struct list* childlist = &(parent->list_child);
+  for (e = list_begin (childlist); e != list_end (childlist);
+     e = list_next (e))
+   {
+     struct thread *t = list_entry (e, struct thread, elem_child);
+     printf("tid : %d , name : %s status : ", t->tid, t->name);
+     switch(t->status)
+     {
+       case 0 : printf("THREAD_RUNNING\n"); break;
+       case 1 : printf("THREAD_READY\n"); break;
+       case 2 : printf("THREAD_BLOCKED\n"); break;
+       case 3 : printf("THREAD_DYING\n"); break;
+     }
+    }  
+}
+void alertThread(const char* debugmsg, struct thread* t)
+{
+  printf("Check in %s\n",debugmsg);
+  printf("tid : %d , name : %s status : ", t->tid, t->name);
+  switch(t->status)
+  {
+    case 0 : printf("THREAD_RUNNING\n"); break;
+    case 1 : printf("THREAD_READY\n"); break;
+    case 2 : printf("THREAD_BLOCKED\n"); break;
+    case 3 : printf("THREAD_DYING\n"); break;
+  }
+  alertChildThread(t);
+  alertAllThread(t->name);
+
+}
+
+
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
    general and it is possible in this case only because loader.S
@@ -84,6 +143,7 @@ static tid_t allocate_tid (void);
 
    It is not safe to call thread_current() until this function
    finishes. */
+
 void
 thread_init (void) 
 {
@@ -184,6 +244,16 @@ thread_create (const char *name, int priority,
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
 
+  /* Start Added Context of Project 1 */
+  //Make the thread the child of current thread.
+  struct thread* current = thread_current(); 
+  alertThread("thread_create : parent",current);
+  alertThread("thread_create : child", t);
+  if(current != t)
+    list_push_back(&(current->list_child), &(t->elem_child));
+  /* End Added Context of Project 1 */
+
+
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
      member cannot be observed. */
@@ -270,9 +340,15 @@ thread_current (void)
      have overflowed its stack.  Each thread has less than 4 kB
      of stack, so a few big automatic arrays or moderate
      recursion can cause stack overflow. */
-  ASSERT (is_thread (t));
-  ASSERT (t->status == THREAD_RUNNING);
 
+
+
+  ASSERT (is_thread (t));
+  
+  if(t->status != THREAD_RUNNING)
+    alertThread("there is no running thread",t);
+  ASSERT (t->status == THREAD_RUNNING);
+  
   return t;
 }
 
@@ -297,9 +373,32 @@ thread_exit (void)
   /* Remove thread from all threads list, set our status to dying,
      and schedule another process.  That process will destroy us
      when it calls thread_schedule_tail(). */
+  struct thread* current = thread_current();
+  alertThread("thread_exit", current);
+  
+  /* Start Added Context of Project 1 */
+
+   alertThread("thread_exit when current", current);
+
+   // Free deallocate all of the content that is added at Project 1
+   //activate all the child's exit and waiting that parent is dead
+  struct list* childlist = &(current->list_child);
+  struct list_elem* childelem;
+  struct thread* child;
+  for (childelem = list_begin (childlist); childelem != list_end (childlist);
+  childelem = list_next (childelem))
+  {
+    child = getChild_byElem(list_remove(childelem));
+    sema_up(&(child->exit_sema));
+  } 
+  sema_up(&(current->wait_sema));
+  sema_down(&(current->exit_sema));
+
+  /* End Added Context of Project 1 */
+  list_remove (&current->allelem);
+  current->status = THREAD_DYING;
   intr_disable ();
-  list_remove (&thread_current()->allelem);
-  thread_current ()->status = THREAD_DYING;
+
   schedule ();
   NOT_REACHED ();
 }
@@ -470,6 +569,21 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
+
+  /* Start Added Context of Project 1 */
+  //init the variable of struct thread that is added in Project 1
+
+  //initiate list_child of thread that will be made
+  list_init (&(t->list_child));
+  // this thread is the child of the current thread.
+  // if list_push_back is in init_thread, thread_current is blocked when thread_init
+  
+  // acquired when parent is wating
+  // and release when parent ends wating (child die) 
+  sema_init_wait(&(t->wait_sema)); 
+  sema_init_wait(&(t->exit_sema)); 
+
+  /* End Added Context of Project 1 */
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
@@ -585,3 +699,26 @@ allocate_tid (void)
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+
+/* Start Added Context of Project 1 */
+struct thread* getChild_byElem(struct list_elem* elem)
+{
+  return list_entry (elem, struct thread, elem_child);
+}
+
+struct thread* getChild_byList(struct thread* t, tid_t tid)
+{ 
+  struct list* childlist = &(t->list_child);
+  struct list_elem* childelem;
+  struct thread* child;
+  for (childelem = list_begin (childlist); childelem != list_end (childlist);
+  childelem = list_next (childelem))
+  {
+    child = getChild_byElem(list_remove(childelem));
+    if(child->tid == tid)
+      return child;
+  }
+  return NULL;
+}
+
+/* End Added Context of Project 1 */

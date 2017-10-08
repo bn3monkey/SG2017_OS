@@ -21,9 +21,12 @@
 
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
-//Project-1 Student Declaration
+
+/* Start Added Context of Project 1 */
 static bool parse_filename(char *str, int *argc, char ***argv);
 static bool construct_ESP(void **esp, int argc, char **argv);
+/* End Added Context of Project 1 */
+
 
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
@@ -102,6 +105,7 @@ int process_wait(tid_t child_tid UNUSED)
 void process_exit(void)
 {
   struct thread *cur = thread_current();
+  alertThread("process_exit", cur);
   uint32_t *pd;
 
   /* Destroy the current process's page directory and switch back
@@ -128,6 +132,7 @@ void process_exit(void)
 void process_activate(void)
 {
   struct thread *t = thread_current();
+  //alertThread("process_activate", t);
 
   /* Activate thread's page tables. */
   pagedir_activate(t->pagedir);
@@ -330,6 +335,8 @@ bool load(const char *file_name, void (**eip)(void), void **esp)
 
   /* Start address. */
   *eip = (void (*)(void))ehdr.e_entry;
+  if(!is_user_vaddr(*eip))
+    return false;
 
   success = true;
 
@@ -494,7 +501,10 @@ install_page(void *upage, void *kpage, bool writable)
   return (pagedir_get_page(th->pagedir, upage) == NULL && pagedir_set_page(th->pagedir, upage, kpage, writable));
 }
 
-//Project-1 Student defined
+
+
+/* Start Added Context of Project 1 */
+
 // You have to concern about the content of argv is not allocated
 // in the heap but the substring of 'str'
 // So, You need to free not argv[i] only argv.
@@ -602,3 +612,5 @@ static bool construct_ESP(void **esp, int argc, char **argv)
 
   return true;
 }
+
+/* End Added Context of Project 1 */
