@@ -96,9 +96,43 @@ start_process(void *file_name_)
    does nothing. */
 int process_wait(tid_t child_tid UNUSED)
 {
+  struct thread* parent = thread_current();
+  struct thread* child = NULL;
+  struct list_elem* childelem;
+  struct list* childlist = &(parent->list_child);
 
-  while(true){}
-  return -1;
+
+  #ifdef DEBUGTHREAD
+  alertThread("process_wait", parent);
+  #endif
+
+  //1. Find the Child and If Cannot find the direct child, return -1
+  for (childelem = list_begin (childlist); childelem != list_end (childlist);
+  childelem = list_next (childelem))
+  {
+    child = list_entry (childelem, struct thread, elem_child);
+    if(child_tid == child->tid)
+      break;
+  }
+  if(child == NULL)
+    return -1;
+  if(child_tid != child->tid)
+    return -1;
+
+  //2. If the thread of this pid is the same with its parent 
+  //it means that this pid has already been waiting
+  //So return -1
+  if(child->has_been_waiting)
+    return -1;
+
+  //3. You first wait for this tid, the thread of this tid lose its parent. 
+  child->has_been_waiting = true;
+
+  //4. Wait for the exit of child
+  sema_down(&(child->wait_sema));
+
+  //5. Get the exit_status.
+  return child->exit_status;
 }
 
 /* Free the current process's resources. */
@@ -343,7 +377,7 @@ bool load(const char *file_name, void (**eip)(void), void **esp)
   /* Start address. */
   *eip = (void (*)(void))ehdr.e_entry;
   if(!is_user_vaddr(*eip))
-    return false;
+    goto done;
 
   success = true;
 
@@ -545,7 +579,7 @@ static bool parse_filename(char *str, int *argc, char ***argv)
   return true;
 }
 
-#define BACKWARD_ESP(TYPE, ESP, VALUE) ESP-=sizeof(TYPE);*(((TYPE *)ESP))=(VALUE)
+#define BACKWARD_ESP(TYPE, ESP, VALUE) ESP-=sizeof(TYPE);*(((TYPE *)ESP))=(VALUE);
 static bool construct_ESP(void **esp, int argc, char **argv)
 {
   int i, j, len, alllen;
@@ -563,7 +597,7 @@ static bool construct_ESP(void **esp, int argc, char **argv)
   */
 
   //Set the Argument
-  printf("%p\n",new_esp);
+  //printf("%p\n",new_esp);
   alllen = 0;
   for (i = argc - 1; i >= 0; i--)
   {
@@ -571,6 +605,7 @@ static bool construct_ESP(void **esp, int argc, char **argv)
     for (j = len; j >= 0; j--)
     {
       BACKWARD_ESP(char, new_esp, argv[i][j]);
+      
       //printf("%p\n",new_esp);
     }
     alllen += len + 1;

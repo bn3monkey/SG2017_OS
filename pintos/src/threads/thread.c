@@ -15,6 +15,8 @@
 #include "userprog/process.h"
 #endif
 
+#define DEBUGTHREAD
+
 /* Random value for struct thread's `magic' member.
    Used to detect stack overflow.  See the big comment at the top
    of thread.h for details. */
@@ -93,16 +95,34 @@ static inline void alertAllThread(const char* name)
 }
 static inline void alertChildThread(struct thread* parent)
 {
+  struct thread *t;
   if(parent==NULL)
     return;
-    printf("%s's child thread\n",parent->name);
+ 
+  if(parent->elem_parent != NULL)
+  {
+    printf("%s's parent thread\n",parent->name);
+    t = list_entry (parent->elem_parent, struct thread, elem_child);
+    printf("tid : %d , name : %s status : ", t->tid, t->name);
+    switch(t->status)
+    {
+      case 0 : printf("THREAD_RUNNING\n"); break;
+      case 1 : printf("THREAD_READY\n"); break;
+      case 2 : printf("THREAD_BLOCKED\n"); break;
+      case 3 : printf("THREAD_DYING\n"); break;
+    }
+  }
+  else
+    printf("%s'father go to America\n",parent->name);
+
+  printf("%s's child thread\n",parent->name);
 
   struct list_elem* e;
   struct list* childlist = &(parent->list_child);
   for (e = list_begin (childlist); e != list_end (childlist);
      e = list_next (e))
    {
-     struct thread *t = list_entry (e, struct thread, elem_child);
+     t = list_entry (e, struct thread, elem_child);
      printf("tid : %d , name : %s status : ", t->tid, t->name);
      switch(t->status)
      {
@@ -253,8 +273,9 @@ thread_create (const char *name, int priority,
   alertThread("thread_create : child", t);
   #endif
   
-  if(current->tid != t->tid)
-    list_push_back(&(current->list_child), &(t->elem_child));
+  //link parent and child
+  t->elem_parent = &(current->elem_child); 
+  list_push_back(&(current->list_child), &(t->elem_child));
   /* End Added Context of Project 1 */
 
 
@@ -386,23 +407,32 @@ thread_exit (void)
   #endif
 
   /* Start Added Context of Project 1 */
-  #ifdef DEBUGTHREAD
+  #ifdef DEBUGTHREAD 
    alertThread("thread_exit when current", current);
   #endif
 
    // Free deallocate all of the content that is added at Project 1
-   //activate all the child's exit and waiting that parent is dead
+   
+   // Disconnect the connection of parent and child.
+   // 호적에서 파버린다.
+
   struct list* childlist = &(current->list_child);
   struct list_elem* childelem;
   struct thread* child;
+  
   for (childelem = list_begin (childlist); childelem != list_end (childlist);
   childelem = list_next (childelem))
   {
-    child = getChild_byElem(list_remove(childelem));
-    sema_up(&(child->exit_sema));
-  } 
+    child = list_entry(childelem, struct thread, elem_child);
+    child->elem_parent = NULL;
+    list_remove(childelem);
+  }
+
   sema_up(&(current->wait_sema));
-  sema_down(&(current->exit_sema));
+  
+  //When parent is NULL, there will be no process wait
+  //So can do the rest of the exit process.
+  while( current->elem_parent != NULL);
 
   /* End Added Context of Project 1 */
   list_remove (&current->allelem);
@@ -585,13 +615,16 @@ init_thread (struct thread *t, const char *name, int priority)
 
   //initiate list_child of thread that will be made
   list_init (&(t->list_child));
-  // this thread is the child of the current thread.
-  // if list_push_back is in init_thread, thread_current is blocked when thread_init
+  
+  // Fisrt, the pointer of parent makes null
+  t->elem_parent = NULL;
   
   // acquired when parent is wating
   // and release when parent ends wating (child die) 
-  sema_init_wait(&(t->wait_sema)); 
-  sema_init_wait(&(t->exit_sema)); 
+  sema_init_wait(&(t->wait_sema));
+
+  //First, has_been_waiting is false
+  t->has_been_waiting = false; 
 
   /* End Added Context of Project 1 */
 }

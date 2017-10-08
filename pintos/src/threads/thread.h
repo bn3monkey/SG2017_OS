@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include "threads/synch.h"
 
+#define DEBUGTHREAD
+
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -25,7 +27,6 @@ typedef int tid_t;
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
 
-#define DEBUGTHREAD
 
 /* A kernel thread or user process.
 
@@ -99,11 +100,13 @@ typedef int tid_t;
     struct list_elem elem;              /* List element. */
 
     /* Start Added Context of Project 1 */
+    struct list_elem* elem_parent; /* List element for parent of this thread */
     struct list_elem elem_child; /* List element for child of this thread */
     struct list list_child; /* the list of child thread */
 
-    struct semaphore wait_sema; /* To lock for using the parent's wait! */
-    struct semaphore exit_sema; /* To exit for using the parent's exit! */
+    struct semaphore wait_sema; /* lock for using the parent's wait! */
+    bool has_been_waiting; // checked when this thread has been waiting
+    int exit_status; // the status of exit
 
     /* End Added Context of Project 1 */
 
