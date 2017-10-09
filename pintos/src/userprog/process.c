@@ -43,9 +43,31 @@ tid_t process_execute(const char *file_name)
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy(fn_copy, file_name, PGSIZE);
+  
+  //Make New thread name
+  char* new_file_name;
+  int temp_argc;
+  char **temp_argv;
+  new_file_name = (char *)malloc((1 + strlen(file_name)) * sizeof(char));
+  if(new_file_name == NULL)
+    return TID_ERROR;
+  strlcpy(new_file_name, file_name, strlen(file_name)+1);
+  parse_filename(new_file_name, &temp_argc, &temp_argv);
+  if(temp_argv == NULL)
+  {
+    free(new_file_name);
+    return TID_ERROR;
+  }
 
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create(file_name, PRI_DEFAULT, start_process, fn_copy);
+  #ifdef DEBUGPROCESS
+  printf("temp_argv : %s \n",temp_argv[0]);
+  #endif
+
+  tid = thread_create(temp_argv[0], PRI_DEFAULT, start_process, fn_copy);
+  
+  free(new_file_name);
+  free(temp_argv);
   if (tid == TID_ERROR)
     palloc_free_page(fn_copy);
   return tid;
@@ -390,8 +412,10 @@ done:
     free(argv);
   if (oristr != NULL)
     free(oristr);
-
-  file_close(file);
+  if(file != NULL)
+    file_close(file);
+  else
+    success = false;
   return success;
 }
 
@@ -573,7 +597,10 @@ static bool parse_filename(char *str, int *argc, char ***argv)
         if(*argv == NULL)
           return false;
         (*argv)[(*argc)-1] = token;
+        
+        #ifdef DEBUGPROCESS
         printf("%s\n",token);
+        #endif
   }
 
   return true;
@@ -592,8 +619,10 @@ static bool construct_ESP(void **esp, int argc, char **argv)
 
   /*
   printf("%d\n",argc);
-  for(int i=0;i<argc;i++)
-    printf("%s\n",argv[i]);
+  for(i=0;i<argc;i++)
+  {
+     printf("%d : %s\n",strlen(argv[i]),argv[i]);
+  }
   */
 
   //Set the Argument
@@ -602,7 +631,8 @@ static bool construct_ESP(void **esp, int argc, char **argv)
   for (i = argc - 1; i >= 0; i--)
   {
     len = strlen(argv[i]);
-    for (j = len; j >= 0; j--)
+    BACKWARD_ESP(char, new_esp, 0);
+    for (j = len-1; j >= 0; j--)
     {
       BACKWARD_ESP(char, new_esp, argv[i][j]);
       
@@ -611,6 +641,7 @@ static bool construct_ESP(void **esp, int argc, char **argv)
     alllen += len + 1;
     argv_esp[i] = (char *)new_esp;
   }
+  
   alllen %= sizeof(char *);
   alllen = sizeof(char*) - alllen;
 

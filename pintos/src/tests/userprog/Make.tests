@@ -19,7 +19,11 @@ tests/userprog/args-many_SRC = tests/userprog/args.c
 tests/userprog/args-dbl-space_SRC = tests/userprog/args.c
 tests/userprog/sc-bad-sp_SRC = tests/userprog/sc-bad-sp.c tests/main.c
 tests/userprog/sc-bad-arg_SRC = tests/userprog/sc-bad-arg.c tests/main.c
-ttests/userprog/halt_SRC = tests/userprog/halt.c tests/main.c
+tests/userprog/sc-boundary_SRC = tests/userprog/sc-boundary.c	\
+tests/userprog/boundary.c tests/main.c
+tests/userprog/sc-boundary-2_SRC = tests/userprog/sc-boundary-2.c	\
+tests/userprog/boundary.c tests/main.c
+tests/userprog/halt_SRC = tests/userprog/halt.c tests/main.c
 tests/userprog/exit_SRC = tests/userprog/exit.c tests/main.c
 tests/userprog/exec-once_SRC = tests/userprog/exec-once.c tests/main.c
 tests/userprog/exec-arg_SRC = tests/userprog/exec-arg.c tests/main.c
@@ -32,6 +36,11 @@ tests/userprog/wait-killed_SRC = tests/userprog/wait-killed.c tests/main.c
 tests/userprog/wait-bad-pid_SRC = tests/userprog/wait-bad-pid.c tests/main.c
 tests/userprog/multi-recurse_SRC = tests/userprog/multi-recurse.c
 
+tests/userprog/child-simple_SRC = tests/userprog/child-simple.c
+tests/userprog/child-args_SRC = tests/userprog/args.c
+tests/userprog/child-bad_SRC = tests/userprog/child-bad.c tests/main.c
+tests/userprog/child-close_SRC = tests/userprog/child-close.c
+tests/userprog/child-rox_SRC = tests/userprog/child-rox.c
 
 $(foreach prog,$(tests/userprog_PROGS),$(eval $(prog)_SRC += tests/lib.c))
 
