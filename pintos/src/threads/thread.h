@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include "threads/synch.h"
 
-#define DEBUGTHREAD
+//#define DEBUGTHREAD
 
 /* States in a thread's life cycle. */
 enum thread_status

@@ -648,7 +648,9 @@ static bool construct_ESP(void **esp, int argc, char **argv)
 
   //printf("%d\n", (int *)(*esp) - (int *)new_esp);
 
+  #ifdef DEBUGPROCESS
   hex_dump((unsigned int)new_esp, new_esp, 4*((int *)(*esp) - (int *)new_esp), true);
+  #endif
 
   *esp = new_esp;
 

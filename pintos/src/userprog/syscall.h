@@ -15,7 +15,7 @@ typedef int pid_t;
 #define EXIT_FAILURE 1          /* Unsuccessful execution. */
 
 /* For debugging argument */
-#define DEBUGARG
+//#define DEBUGARG
 
 void syscall_init (void);
 
