@@ -38,6 +38,9 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
 
+/* Lock used by read file */
+static struct lock file_lock;
+
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
   {
@@ -169,6 +172,7 @@ thread_init (void)
   ASSERT (intr_get_level () == INTR_OFF);
 
   lock_init (&tid_lock);
+  lock_init (&file_lock);
   list_init (&ready_list);
   list_init (&all_list);
 
@@ -608,6 +612,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
+  t->exit_status = 0;
 
   /* Start Added Context of Project 1 */
   //init the variable of struct thread that is added in Project 1
@@ -622,6 +627,13 @@ init_thread (struct thread *t, const char *name, int priority)
   // and release when parent ends wating (child die) 
   sema_init_wait(&(t->wait_sema));
 
+  //Share the file lock and this file lock uses for making critical section
+  t->file_lock = &file_lock;
+
+  //for waiting end of load in process_execute.
+  sema_init_wait((&(t->load_sema)));
+  sema_init_wait(&(t->execute_sema));
+  
   //First, has_been_waiting is false
   t->has_been_waiting = false; 
 
@@ -743,6 +755,10 @@ allocate_tid (void)
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
 
 /* Start Added Context of Project 1 */
+struct thread* getParent(struct thread* t)
+{
+  return list_entry (t->elem_parent, struct thread, elem_child);
+}
 struct thread* getChild_byElem(struct list_elem* elem)
 {
   return list_entry (elem, struct thread, elem_child);
@@ -763,4 +779,18 @@ struct thread* getChild_byList(struct thread* t, tid_t tid)
   return NULL;
 }
 
+struct thread* getChild_byList_nonremove(struct thread* t, tid_t tid)
+{ 
+  struct list* childlist = &(t->list_child);
+  struct list_elem* childelem;
+  struct thread* child;
+  for (childelem = list_begin (childlist); childelem != list_end (childlist);
+  childelem = list_next (childelem))
+  {
+    child = getChild_byElem(childelem);
+    if(child->tid == tid)
+      return child;
+  }
+  return NULL;
+}
 /* End Added Context of Project 1 */

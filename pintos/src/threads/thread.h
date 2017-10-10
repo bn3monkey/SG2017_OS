@@ -108,6 +108,11 @@ typedef int tid_t;
     bool has_been_waiting; // checked when this thread has been waiting
     int exit_status; // the status of exit
 
+    struct lock* file_lock; /* for safe file input with blocking other thread */
+    
+    struct semaphore load_sema; /* for maintaining process_execute while load ends */
+    struct semaphore execute_sema;  /* for maintaining load while process_execute gets the exit_status */
+
     /* End Added Context of Project 1 */
 
 #ifdef USERPROG
@@ -157,9 +162,11 @@ int thread_get_load_avg (void);
 
 
 /* Start Added Context of Project 1 */
+struct thread* getParent(struct thread* t);
 struct thread* getChild_byElem(struct list_elem* elem);
 
 struct thread* getChild_byList(struct thread* t, tid_t tid);
+struct thread* getChild_byList_nonremove(struct thread* t, tid_t tid);
 
 void alertThread(const char* debugmsg, struct thread* t);
 /* End Added Context of Project 1 */

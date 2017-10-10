@@ -25,6 +25,7 @@ static bool load(const char *cmdline, void (**eip)(void), void **esp);
 /* Start Added Context of Project 1 */
 static bool parse_filename(char *str, int *argc, char ***argv);
 static bool construct_ESP(void **esp, int argc, char **argv);
+
 /* End Added Context of Project 1 */
 
 
@@ -66,10 +67,45 @@ tid_t process_execute(const char *file_name)
 
   tid = thread_create(temp_argv[0], PRI_DEFAULT, start_process, fn_copy);
   
+  //Wait the child thread's load ends.
+
+  struct thread* parent = thread_current();
+  #ifdef DEBUGPROCESS
+  alertThread("process_execute : parent",parent);
+  #endif
+  struct thread* child = getChild_byList_nonremove(parent, tid);
+  #ifdef DEBUGPROCESS
+  alertThread("process_execute : child",child);
+  #endif
+
+  sema_down(&(child->load_sema));
+  int load_status = 0;
+  load_status = child->exit_status;
+   #ifdef DEBUGPROCESS
+  printf("\n\nload_status : %d\n\n",load_status);
+  #endif
+  if(load_status == -1)
+  {
+    tid = TID_ERROR;
+    #ifdef DEBUGPROCESS
+    printf("\n\nUnsuccess in process_excute\n\n");
+    #endif
+  }
+
+  #ifdef DEBUGPROCESS
+  printf("\nProcess_excute %s : child->excute_sema %d\n\n",child->name,child->execute_sema.value);
+  #endif
+  sema_up(&(child->execute_sema));  
+  #ifdef DEBUGPROCESS
+  printf("\nProcess_excute %s : child->excute_sema %d\n\n",child->name,child->execute_sema.value);
+  printf("\n\nExcute :  Start Please!!\n\n");
+  #endif
+
   free(new_file_name);
   free(temp_argv);
   if (tid == TID_ERROR)
     palloc_free_page(fn_copy);
+    
   return tid;
 }
 
@@ -82,6 +118,10 @@ start_process(void *file_name_)
   struct intr_frame if_;
   bool success;
 
+  #ifdef DEBUGPROCESS
+  printf("start_process , file_name : %s \n",file_name);
+  #endif
+
   /* Initialize interrupt frame and load executable. */
   memset(&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
@@ -89,10 +129,36 @@ start_process(void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load(file_name, &if_.eip, &if_.esp);
 
-  /* If load failed, quit. */
-  palloc_free_page(file_name);
+  /* Set the load child to parent for getting load status in parent thread*/
+  struct thread* child = thread_current();
+  #ifdef DEBUGPROCESS
+  alertThread("start_process : child",child);
+  #endif
+
   if (!success)
+  {
+    #ifdef DEBUGPROCESS
+    printf("\n\nUnsuccess in start_process\n\n");
+    #endif
+    child->exit_status = -1;
+    //palloc_free_page(file_name);
+  } 
+  sema_up(&(child->load_sema));
+
+  #ifdef DEBUGPROCESS
+  printf("\n\nStart_Process %s child->excute_sema %d\n\n",child->name,child->execute_sema.value);
+  #endif
+  sema_down(&(child->execute_sema));
+  #ifdef DEBUGPROCESS
+  printf("\n\nStart  :  Start Please!!\n\n");
+  #endif
+
+  /* If load failed, quit. */
+  if (!success)
+  { 
     thread_exit();
+  }
+
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -120,8 +186,7 @@ int process_wait(tid_t child_tid UNUSED)
 {
   struct thread* parent = thread_current();
   struct thread* child = NULL;
-  struct list_elem* childelem;
-  struct list* childlist = &(parent->list_child);
+
 
 
   #ifdef DEBUGTHREAD
@@ -129,13 +194,7 @@ int process_wait(tid_t child_tid UNUSED)
   #endif
 
   //1. Find the Child and If Cannot find the direct child, return -1
-  for (childelem = list_begin (childlist); childelem != list_end (childlist);
-  childelem = list_next (childelem))
-  {
-    child = list_entry (childelem, struct thread, elem_child);
-    if(child_tid == child->tid)
-      break;
-  }
+  child = getChild_byList_nonremove(parent, child_tid);
   if(child == NULL)
     return -1;
   if(child_tid != child->tid)
@@ -309,12 +368,16 @@ bool load(const char *file_name, void (**eip)(void), void **esp)
 
   
   /* Open executable file. */
+  lock_acquire (t->file_lock);
+  //printf("argv[0] : %s\n", argv[0]);
   file = filesys_open(argv[0] /*file_name*/ );
   if (file == NULL)
   {
+    lock_release (t->file_lock);
     printf("load: %s: open failed\n", argv[0] /*file_name*/);
     goto done;
   }
+  lock_release (t->file_lock);
 
   /* Read and verify executable header. */
   if (file_read(file, &ehdr, sizeof ehdr) != sizeof ehdr || memcmp(ehdr.e_ident, "\177ELF\1\1\1", 7) || ehdr.e_type != 2 || ehdr.e_machine != 3 || ehdr.e_version != 1 || ehdr.e_phentsize != sizeof(struct Elf32_Phdr) || ehdr.e_phnum > 1024)
@@ -414,8 +477,7 @@ done:
     free(oristr);
   if(file != NULL)
     file_close(file);
-  else
-    success = false;
+
   return success;
 }
 
