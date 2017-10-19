@@ -402,9 +402,17 @@ static void s_close (int fd)
 */
 int s_fibonacci (int n)
 {
+  int sign;
   int a1 = 1;
   int a2 = 1;
   int t = 0;
+  if(n==0)
+    return 0;
+  if(n<0)
+    sign = -1;
+  else
+    sign = 1;
+
   n -= 2;
   while(n--)
   {
@@ -412,7 +420,7 @@ int s_fibonacci (int n)
     a2 += a1;
     a1 = t;
   }
-  return a2; 
+  return sign * a2; 
 }
 int s_sum_of_four_integers (int a, int b, int c, int d)
 {
