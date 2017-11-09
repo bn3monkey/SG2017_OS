@@ -429,13 +429,14 @@ thread_exit (void)
     child = list_entry(childelem, struct thread, elem_child);
     child->elem_parent = NULL;
     list_remove(childelem);
+    //When child has no parent , there will be no process wait
+    //So can do the rest of the exit process.
+    sema_up(&(child->dead_sema));
   }
 
   sema_up(&(current->wait_sema));
   
-  //When parent is NULL, there will be no process wait
-  //So can do the rest of the exit process.
-  while( current->elem_parent != NULL);
+  sema_down(&(current->dead_sema));
 
   /* End Added Context of Project 1 */
   list_remove (&current->allelem);
@@ -626,6 +627,7 @@ init_thread (struct thread *t, const char *name, int priority)
   // acquired when parent is wating
   // and release when parent ends wating (child die) 
   sema_init_wait(&(t->wait_sema));
+  sema_init_wait(&(t->dead_sema));
 
   //Share the file lock and this file lock uses for making critical section
   t->file_lock = &file_lock;

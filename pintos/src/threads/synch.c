@@ -312,7 +312,7 @@ cond_wait (struct condition *cond, struct lock *lock)
   lock_acquire (lock);
 }
 
-/* If any threads are waiting on COND (protected by LOCK), then
+ /* If any threads are waiting on COND (protected by LOCK), then
    this function signals one of them to wake up from its wait.
    LOCK must be held before calling this function.
 

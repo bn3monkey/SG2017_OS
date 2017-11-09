@@ -103,7 +103,8 @@ typedef int tid_t;
     struct list_elem* elem_parent; /* List element for parent of this thread */
     struct list_elem elem_child; /* List element for child of this thread */
     struct list list_child; /* the list of child thread */
-
+    
+    struct semaphore dead_sema; /* lock before the parent's dying! */
     struct semaphore wait_sema; /* lock for using the parent's wait! */
     bool has_been_waiting; // checked when this thread has been waiting
     int exit_status; // the status of exit
@@ -164,7 +165,6 @@ int thread_get_load_avg (void);
 /* Start Added Context of Project 1 */
 struct thread* getParent(struct thread* t);
 struct thread* getChild_byElem(struct list_elem* elem);
-
 struct thread* getChild_byList(struct thread* t, tid_t tid);
 struct thread* getChild_byList_nonremove(struct thread* t, tid_t tid);
 

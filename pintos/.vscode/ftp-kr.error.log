@@ -1,0 +1,10 @@
+[Error]
+message: getaddrinfo ENOENT cspro10.sogang.ac.kr:22[ENOENT]
+[Stack Trace]
+Error: getaddrinfo ENOENT cspro10.sogang.ac.kr:22[ENOENT]
+	at _errorWrap (C:\Users\bn3mo\.vscode\extensions\ruakr.ftp-kr-1.1.7\out\ftp.js:529:16)
+	at Object.<anonymous> (C:\Users\bn3mo\.vscode\extensions\ruakr.ftp-kr-1.1.7\out\ftp.js:634:23)
+	at Generator.throw (<anonymous>)
+	at rejected (C:\Users\bn3mo\.vscode\extensions\ruakr.ftp-kr-1.1.7\out\ftp.js:5:65)
+	at <anonymous>
+	at process._tickCallback (internal/process/next_tick.js:109:7)

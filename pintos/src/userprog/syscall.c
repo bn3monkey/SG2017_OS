@@ -253,11 +253,24 @@ static void sys_func_wait (struct intr_frame *f UNUSED)
 }
 static void sys_func_create (struct intr_frame *f UNUSED)
 {
-  //Make Later.
+  sys_lock_acquire();
+  sys_out(
+      s_create(
+        sys_arg_str(FUNC_ARG1, f),
+        (unsigned)sys_arg_int(FUNC_ARG2, f)
+      )
+    );
+  sys_lock_release();
 }
 static void sys_func_remove (struct intr_frame *f UNUSED)
 {
-  //Make Later.
+  sys_lock_acquire();
+  sys_out(
+      s_remove(
+        sys_arg_str(FUNC_ARG1, f)
+      )
+    );
+  sys_lock_release();
 }
 static void sys_func_open (struct intr_frame *f UNUSED)
 {
@@ -349,15 +362,16 @@ int s_wait (pid_t tid)
 {
   return process_wait (tid);
 }
-/*
+
 static bool s_create (const char *file, unsigned initial_size)
 {
-  //Make Later.
+  return filesys_create(file, initial_size);
 }
 static bool s_remove (const char *file)
 {
-  //Make Later.
+  return filesys_remove(file);
 }
+/*
 static int s_open (const char *file)
 {
   //Make Later.
