@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
+#include "filesys/filesys.h"
 
 //#define DEBUGTHREAD
 
@@ -27,6 +28,7 @@ typedef int tid_t;
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
 
+#define MAX_OPENFILE 128;
 
 /* A kernel thread or user process.
 
@@ -109,12 +111,18 @@ typedef int tid_t;
     bool has_been_waiting; // checked when this thread has been waiting
     int exit_status; // the status of exit
 
-    struct lock* file_lock; /* for safe file input with blocking other thread */
-    
     struct semaphore load_sema; /* for maintaining process_execute while load ends */
     struct semaphore execute_sema;  /* for maintaining load while process_execute gets the exit_status */
 
     /* End Added Context of Project 1 */
+
+    /* Start Added Context of Project 1-2 */
+    struct lock* file_lock; /* for safe file input with blocking other thread */
+    struct file** fd_table; /* FILE DESCRIPTOR TABLE */
+    int table_top; // table is managed like stack, so it has a top. 
+    struct file* processfile; /* the process file. it cannot be written while process ends. */
+    
+
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

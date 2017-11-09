@@ -8,6 +8,7 @@
 #include "threads/interrupt.h"
 #include "threads/intr-stubs.h"
 #include "threads/palloc.h"
+#include "threads/malloc.h"
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
@@ -281,6 +282,20 @@ thread_create (const char *name, int priority,
   list_push_back(&(current->list_child), &(t->elem_child));
   /* End Added Context of Project 1 */
 
+  /* Start Added Context of Project 1- 2 */
+  
+  t->fd_table = (struct file**)malloc(MAX_OPENFILE * sizeof(struct file*));
+  
+  if(t->fd_table == NULL)
+  {
+    palloc_free_page(t);
+    return TID_ERROR;
+  }
+
+  //when if you fail to make fd_table, destroy new thread t and return tid_error.
+
+  /* End Added Context of Project 1 -2 */
+
 
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
@@ -409,6 +424,19 @@ thread_exit (void)
   alertThread("thread_exit", current);
   #endif
 
+
+
+  /* Start Added Context of Project 1-2 */
+  while(current->table_top)
+  {
+    file_close(current->fd_table[--(current->table_top)]);
+  }
+  free(current->fd_table);
+  file_close(processfile);
+  //Close All the file and destroy fd_table.
+  /* End Added Context of Project 1-2 */
+
+
   /* Start Added Context of Project 1 */
   #ifdef DEBUGTHREAD 
    alertThread("thread_exit when current", current);
@@ -439,6 +467,7 @@ thread_exit (void)
   sema_down(&(current->dead_sema));
 
   /* End Added Context of Project 1 */
+
   list_remove (&current->allelem);
   current->status = THREAD_DYING;
   intr_disable ();
@@ -629,8 +658,7 @@ init_thread (struct thread *t, const char *name, int priority)
   sema_init_wait(&(t->wait_sema));
   sema_init_wait(&(t->dead_sema));
 
-  //Share the file lock and this file lock uses for making critical section
-  t->file_lock = &file_lock;
+
 
   //for waiting end of load in process_execute.
   sema_init_wait((&(t->load_sema)));
@@ -640,6 +668,14 @@ init_thread (struct thread *t, const char *name, int priority)
   t->has_been_waiting = false; 
 
   /* End Added Context of Project 1 */
+
+  /* Start Added Context of Project 1-2 */
+  //Share the file lock and this file lock uses for making critical section
+  t->file_lock = &file_lock;
+  t->table_top = 0;
+  t->processfile = NULL;
+
+  /* End Added Context of Project 1-2 */
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and

@@ -377,6 +377,8 @@ bool load(const char *file_name, void (**eip)(void), void **esp)
     printf("load: %s: open failed\n", argv[0] /*file_name*/);
     goto done;
   }
+  t->processfile = file;
+  file_deny_write (file);
   lock_release (t->file_lock);
 
   /* Read and verify executable header. */
