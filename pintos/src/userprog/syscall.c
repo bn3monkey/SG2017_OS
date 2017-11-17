@@ -10,6 +10,7 @@
 #include <syscall-nr.h>
 
 #include "filesys/filesys.h"
+#include "filesys/file.h"
 
 static void syscall_handler (struct intr_frame *);
 
@@ -63,40 +64,40 @@ static int sys_arg_int(int arg, struct intr_frame *f UNUSED);
 static int sys_arg_int(int arg, struct intr_frame *f UNUSED);
 
 //For lock
-void sys_lock_init(void);
-void sys_lock_acquire(void);
-void sys_lock_release(void);
-void sys_lock_force_release(void);
+void file_lock_init(void);
+void file_lock_acquire(void);
+void file_lock_release(void);
+void file_lock_force_release(void);
 void force_exit(void);
 
 /* For system lock */
 
-struct lock sys_lock;
-//For locking when when system call is called twice.
-void sys_lock_init(void)
+struct lock file_lock;
+//For locking when when file access
+void file_lock_init(void)
 {
-  lock_init(&sys_lock);
+  lock_init(&file_lock);
 }
-void sys_lock_acquire(void)
+void file_lock_acquire(void)
 {
-  lock_acquire(&sys_lock);
+  lock_acquire(&file_lock);
 }
-void sys_lock_release(void)
+void file_lock_release(void)
 {
-  lock_release(&sys_lock);
+  lock_release(&file_lock);
 }
 //For using to make system calling twice such as halt or exit available.  
-void sys_lock_force_release(void)
+void file_lock_force_release(void)
 {
-  if(lock_held_by_current_thread(&sys_lock))
-    sys_lock_release();
+  if(lock_held_by_current_thread(&file_lock))
+    file_lock_release();
 }
 
 /* For Validating User Memory Access */
 //if there is invalid value on pointer or value, the thread calling system_call exits
 void force_exit(void)
 {
-  sys_lock_force_release();
+  file_lock_force_release();
   s_exit(-1);
 }
 static void validate_user_vaddr(void* p)
@@ -177,8 +178,14 @@ static char* sys_arg_str(int arg, struct intr_frame *f UNUSED)
 {
   //Validity Check of Stack Pointer
   validate_user_vaddr(f->esp+sys_arg_gap(arg));
-
   char* temp = sys_in(arg, char *);
+  char* ptr = temp;
+  while(*ptr != '\0')
+  {
+    validate_user_vaddr(ptr);
+    ptr++;
+  }
+
   #ifdef DEBUGARG
   printf("the sytem call argument(%d) is %s\n", arg, temp);
   #endif
@@ -198,7 +205,7 @@ syscall_init (void)
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 
-  sys_lock_init();
+  file_lock_init();
 
   sys_func_arr[SYS_HALT] = sys_func_halt;
   sys_func_arr[SYS_EXIT] = sys_func_exit;
@@ -227,14 +234,16 @@ syscall_handler (struct intr_frame *f UNUSED)
 static void sys_func_halt(struct intr_frame *f UNUSED)
 {
   //When halt or exit, you ignore previous call
-  sys_lock_force_release();
+  //file_lock_force_release();
+  //file_lock_release();
   s_halt();
   NOT_REACHED();
 }
-static void sys_func_exit (struct intr_frame *f UNUSED)
+static void sys_func_exit (struct intr_frame *f)
 {
   //When halt or exit, you ignore previous call
-  sys_lock_force_release();
+  //file_lock_force_release();
+  //file_lock_release();
   s_exit(
       sys_arg_int(FUNC_ARG1, f)
     );
@@ -282,27 +291,28 @@ static void sys_func_remove (struct intr_frame *f UNUSED)
 static void sys_func_open (struct intr_frame *f UNUSED)
 {
   //When open the file twice concurrently, Error may be occured.
-  sys_lock_acquire();
+  
+  file_lock_acquire();
   sys_out(
       s_open(
         sys_arg_str(FUNC_ARG1, f)
       )
     );
-  sys_lock_release();
+  file_lock_release();
 }
 static void sys_func_filesize (struct intr_frame *f UNUSED)
 {
    //when filesize, you don't have to care previous call.
     sys_out(
       s_filesize(
-        sys_arg_str(FUNC_ARG1, f)
+        sys_arg_int(FUNC_ARG1, f)
       )
     );
 }
 static void sys_func_read (struct intr_frame *f UNUSED)
 {
   //When read the file twice concurrently, Error may be occured.
-  sys_lock_acquire();
+  file_lock_acquire();
   sys_out(
     s_read(
       sys_arg_int(FUNC_ARG1, f),
@@ -310,13 +320,13 @@ static void sys_func_read (struct intr_frame *f UNUSED)
       (unsigned)sys_arg_int(FUNC_ARG3, f)
     )
   );
-  sys_lock_release();
+  file_lock_release();
 }
 
 static void sys_func_write (struct intr_frame *f UNUSED)
 {
   //When write the file twice concurrently, Error may be occured.
-  sys_lock_acquire();
+  file_lock_acquire();
   sys_out(
     s_write(
       sys_arg_int(FUNC_ARG1, f),
@@ -324,17 +334,15 @@ static void sys_func_write (struct intr_frame *f UNUSED)
       (unsigned)sys_arg_int(FUNC_ARG3, f)
     )
   );
-  sys_lock_release();
+  file_lock_release();
 }
 static void sys_func_seek (struct intr_frame *f UNUSED)
 {
   //when seek, you don't have to care previous call.
-  sys_out(
-    s_seek(
+  s_seek(
       sys_arg_int(FUNC_ARG1, f),
       (unsigned)sys_arg_int(FUNC_ARG2, f)
-    )
-  );
+    );
 }
 
 static void sys_func_tell (struct intr_frame *f UNUSED)
@@ -351,11 +359,9 @@ static void sys_func_close (struct intr_frame *f UNUSED)
 {
   //when close, you don't have to care previous call.
   //when closing and read file concurrently, file_close ocrrured after last opener ends
-  sys_out(
     s_close(
       sys_arg_int(FUNC_ARG1, f)
-    )
-  );
+    );
 }
 
 static void sys_func_fibonacci (struct intr_frame *f UNUSED)
@@ -415,33 +421,35 @@ bool s_remove (const char *file)
 int s_open (const char *file)
 {
   struct thread* current = thread_current();
-  struct* file temp;
-  file = filesys_open(file);
-  if(file==NULL)
+  struct file* temp;
+
+  temp = filesys_open(file);
+  if(temp==NULL)
     return -1;
   if(current->table_top >= MAX_OPENFILE)
   {
-    file_close(file);
+    file_close(temp);
     return -1;
   }
-  current->fd_table[(current->table_top)++] = file;
+  current->fd_table[(current->table_top)++] = temp;
   return current->table_top + 1;
   //real index = (current->table_top - 1) + 2(stdin, stdout)
 }
+
 int s_filesize (int fd)
 {
   //make fd - 2(stdin, stdout) 
-  struct* file temp = getfile(fd);
+  struct file* temp = getfile(fd);
   if(!temp)
     return -1;
-  return file_length(current->fd_table[fd]);
+  return file_length(temp);
   //Make Later.
 }
 
 int s_read (int fd, void *buffer, unsigned length)
 {
   unsigned i;
-  struct* file temp;
+  struct file* temp;
   if (fd == 0)
   {
     // 표준 입력
@@ -462,7 +470,7 @@ int s_read (int fd, void *buffer, unsigned length)
 }
 int s_write (int fd, const void *buffer, unsigned length)
 {
-  struct* file temp;
+  struct file* temp;
   if(fd == 1)
   {
     putbuf(buffer, length);
@@ -481,25 +489,26 @@ int s_write (int fd, const void *buffer, unsigned length)
 }
 void s_seek (int fd, unsigned position)
 {
-  struct* file temp = getfile(fd);
+  struct file* temp = getfile(fd);
   if (temp == NULL)
     return;
-  file_seek (f, position);  
+  file_seek (temp, position);  
 }
 unsigned s_tell (int fd)
 {
-  struct file *f = process_get_file (fd);
-  if (f == NULL)
+  struct file *temp = getfile (fd);
+  if (temp == NULL)
     return -1;
-  return file_tell (f);
+  return file_tell (temp);
 }
 void s_close (int fd)
 {
-   struct* file temp = getfile(fd);
-  if (temp == NULL)
+  struct thread* current = thread_current();
+  fd -= 2;
+  if(fd<0 && fd>=(current->table_top))
     return;
-  file_close (temp);
-  t->fd_table[fd-2] = NULL;
+  file_close(current->fd_table[fd]);
+  current->fd_table[fd] = NULL;
 }
 
 int s_fibonacci (int n)

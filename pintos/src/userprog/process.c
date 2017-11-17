@@ -28,6 +28,8 @@ static bool construct_ESP(void **esp, int argc, char **argv);
 
 /* End Added Context of Project 1 */
 
+extern void file_lock_acquire(void);
+extern void file_lock_release(void);
 
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
@@ -51,11 +53,15 @@ tid_t process_execute(const char *file_name)
   char **temp_argv;
   new_file_name = (char *)malloc((1 + strlen(file_name)) * sizeof(char));
   if(new_file_name == NULL)
+  {
+    palloc_free_page(fn_copy);
     return TID_ERROR;
+  }
   strlcpy(new_file_name, file_name, strlen(file_name)+1);
   parse_filename(new_file_name, &temp_argc, &temp_argv);
   if(temp_argv == NULL)
   {
+    palloc_free_page(fn_copy);
     free(new_file_name);
     return TID_ERROR;
   }
@@ -186,8 +192,7 @@ int process_wait(tid_t child_tid UNUSED)
 {
   struct thread* parent = thread_current();
   struct thread* child = NULL;
-
-
+  int exit_status;
 
   #ifdef DEBUGTHREAD
   alertThread("process_wait", parent);
@@ -212,8 +217,13 @@ int process_wait(tid_t child_tid UNUSED)
   //4. Wait for the exit of child
   sema_down(&(child->wait_sema));
 
+  //4-2. Kill the child
+  exit_status = child->exit_status;
+
+  sema_up(&(child->dead_sema));
+
   //5. Get the exit_status.
-  return child->exit_status;
+  return exit_status;
 }
 
 /* Free the current process's resources. */
@@ -226,6 +236,26 @@ void process_exit(void)
   #endif
   
   uint32_t *pd;
+
+/* Start Added Context of Project 1-2 */
+
+  if(cur->fd_table != NULL)
+  {
+   while(cur->table_top)
+   {
+     --(cur->table_top);
+     file_close(cur->fd_table[(cur->table_top)]);
+   }
+  free(cur->fd_table);
+  } 
+
+  //printf("test exit : %p\n", cur->processfile);
+  
+  //file_valid(cur->processfile);
+  file_close(cur->processfile);
+
+  //Close All the file and destroy fd_table.
+  /* End Added Context of Project 1-2 */
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
@@ -366,20 +396,21 @@ bool load(const char *file_name, void (**eip)(void), void **esp)
     goto done;
   }
 
-  
   /* Open executable file. */
-  lock_acquire (t->file_lock);
+  file_lock_acquire();
   //printf("argv[0] : %s\n", argv[0]);
   file = filesys_open(argv[0] /*file_name*/ );
   if (file == NULL)
   {
-    lock_release (t->file_lock);
+    file_lock_release();
     printf("load: %s: open failed\n", argv[0] /*file_name*/);
     goto done;
   }
-  t->processfile = file;
   file_deny_write (file);
-  lock_release (t->file_lock);
+  t->processfile = file;
+  //printf("test start : %p\n", t->processfile);
+
+  file_lock_release();
 
   /* Read and verify executable header. */
   if (file_read(file, &ehdr, sizeof ehdr) != sizeof ehdr || memcmp(ehdr.e_ident, "\177ELF\1\1\1", 7) || ehdr.e_type != 2 || ehdr.e_machine != 3 || ehdr.e_version != 1 || ehdr.e_phentsize != sizeof(struct Elf32_Phdr) || ehdr.e_phnum > 1024)
@@ -477,8 +508,6 @@ done:
     free(argv);
   if (oristr != NULL)
     free(oristr);
-  if(file != NULL)
-    file_close(file);
 
   return success;
 }

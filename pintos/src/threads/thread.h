@@ -5,7 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
-#include "filesys/filesys.h"
+//#include "filesys/filesys.h"
 
 //#define DEBUGTHREAD
 
@@ -28,7 +28,7 @@ typedef int tid_t;
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
 
-#define MAX_OPENFILE 128;
+#define MAX_OPENFILE 128
 
 /* A kernel thread or user process.
 
@@ -102,10 +102,12 @@ typedef int tid_t;
     struct list_elem elem;              /* List element. */
 
     /* Start Added Context of Project 1 */
-    struct list_elem* elem_parent; /* List element for parent of this thread */
     struct list_elem elem_child; /* List element for child of this thread */
     struct list list_child; /* the list of child thread */
-    
+    #ifdef DEBUGTHREAD
+    struct list_elem* elem_parent; /* List element for parent of this thread */
+    #endif
+
     struct semaphore dead_sema; /* lock before the parent's dying! */
     struct semaphore wait_sema; /* lock for using the parent's wait! */
     bool has_been_waiting; // checked when this thread has been waiting
@@ -117,7 +119,6 @@ typedef int tid_t;
     /* End Added Context of Project 1 */
 
     /* Start Added Context of Project 1-2 */
-    struct lock* file_lock; /* for safe file input with blocking other thread */
     struct file** fd_table; /* FILE DESCRIPTOR TABLE */
     int table_top; // table is managed like stack, so it has a top. 
     struct file* processfile; /* the process file. it cannot be written while process ends. */
@@ -171,7 +172,9 @@ int thread_get_load_avg (void);
 
 
 /* Start Added Context of Project 1 */
+#ifdef DEBUGTHREAD
 struct thread* getParent(struct thread* t);
+#endif
 struct thread* getChild_byElem(struct list_elem* elem);
 struct thread* getChild_byList(struct thread* t, tid_t tid);
 struct thread* getChild_byList_nonremove(struct thread* t, tid_t tid);

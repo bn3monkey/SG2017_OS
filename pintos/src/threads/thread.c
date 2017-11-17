@@ -15,7 +15,7 @@
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
-
+#include "filesys/file.h"
 
 /* Random value for struct thread's `magic' member.
    Used to detect stack overflow.  See the big comment at the top
@@ -39,8 +39,6 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
 
-/* Lock used by read file */
-static struct lock file_lock;
 
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
@@ -76,7 +74,7 @@ static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
-
+#ifdef DEBUGTHEAD
 static inline void alertAllThread(const char* name)
 {
   printf("%s's all thread\n",name);
@@ -151,8 +149,7 @@ void alertThread(const char* debugmsg, struct thread* t)
   alertAllThread(t->name);
 
 }
-
-
+#endif
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
    general and it is possible in this case only because loader.S
@@ -173,7 +170,6 @@ thread_init (void)
   ASSERT (intr_get_level () == INTR_OFF);
 
   lock_init (&tid_lock);
-  lock_init (&file_lock);
   list_init (&ready_list);
   list_init (&all_list);
 
@@ -278,13 +274,15 @@ thread_create (const char *name, int priority,
   #endif
   
   //link parent and child
+  #ifdef DEBUGTHREAD
   t->elem_parent = &(current->elem_child); 
+  #endif
   list_push_back(&(current->list_child), &(t->elem_child));
   /* End Added Context of Project 1 */
 
   /* Start Added Context of Project 1- 2 */
   
-  t->fd_table = (struct file**)malloc(MAX_OPENFILE * sizeof(struct file*));
+  t->fd_table = (struct file**)malloc(sizeof(struct file *)*MAX_OPENFILE);
   
   if(t->fd_table == NULL)
   {
@@ -424,23 +422,12 @@ thread_exit (void)
   alertThread("thread_exit", current);
   #endif
 
-
-
-  /* Start Added Context of Project 1-2 */
-  while(current->table_top)
-  {
-    file_close(current->fd_table[--(current->table_top)]);
-  }
-  free(current->fd_table);
-  file_close(processfile);
-  //Close All the file and destroy fd_table.
-  /* End Added Context of Project 1-2 */
-
-
-  /* Start Added Context of Project 1 */
   #ifdef DEBUGTHREAD 
    alertThread("thread_exit when current", current);
   #endif
+
+   /* Start Added Context of Project 1 */
+
 
    // Free deallocate all of the content that is added at Project 1
    
@@ -451,23 +438,44 @@ thread_exit (void)
   struct list_elem* childelem;
   struct thread* child;
   
-  for (childelem = list_begin (childlist); childelem != list_end (childlist);
-  childelem = list_next (childelem))
+  
+  for (childelem = list_begin (childlist); childelem != list_end (childlist);)
   {
     child = list_entry(childelem, struct thread, elem_child);
-    child->elem_parent = NULL;
-    list_remove(childelem);
-    //When child has no parent , there will be no process wait
-    //So can do the rest of the exit process.
+    if(child->has_been_waiting == false)
+    {
+      childelem = list_remove(childelem);
+      sema_up(&(child->dead_sema));  
+    }
+    else 
+      childelem = list_next (childelem);
+  }
+  
+  /*
+  while(!list_empty(childlist))
+  {
+    child = list_pop_front(childlist);
     sema_up(&(child->dead_sema));
   }
-
-  sema_up(&(current->wait_sema));
+  */
   
+
+/*
+  while(!list_empty(childlist))
+  {
+    printf("%s\n",getChild_byElem(list_pop_front (childlist))->name);
+  }
+*/
+  sema_up(&(current->wait_sema));
+
+ 
+
   sema_down(&(current->dead_sema));
 
   /* End Added Context of Project 1 */
 
+ if(current->has_been_waiting == true)
+    list_remove (&current->elem_child);
   list_remove (&current->allelem);
   current->status = THREAD_DYING;
   intr_disable ();
@@ -651,8 +659,9 @@ init_thread (struct thread *t, const char *name, int priority)
   list_init (&(t->list_child));
   
   // Fisrt, the pointer of parent makes null
+  #ifdef DEBUGTHREAD
   t->elem_parent = NULL;
-  
+  #endif
   // acquired when parent is wating
   // and release when parent ends wating (child die) 
   sema_init_wait(&(t->wait_sema));
@@ -671,10 +680,8 @@ init_thread (struct thread *t, const char *name, int priority)
 
   /* Start Added Context of Project 1-2 */
   //Share the file lock and this file lock uses for making critical section
-  t->file_lock = &file_lock;
   t->table_top = 0;
   t->processfile = NULL;
-
   /* End Added Context of Project 1-2 */
 }
 
@@ -793,10 +800,12 @@ allocate_tid (void)
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
 
 /* Start Added Context of Project 1 */
+#ifdef DEBUGTHREAD
 struct thread* getParent(struct thread* t)
 {
   return list_entry (t->elem_parent, struct thread, elem_child);
 }
+#endif
 struct thread* getChild_byElem(struct list_elem* elem)
 {
   return list_entry (elem, struct thread, elem_child);

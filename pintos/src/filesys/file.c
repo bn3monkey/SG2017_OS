@@ -166,3 +166,12 @@ file_tell (struct file *file)
   ASSERT (file != NULL);
   return file->pos;
 }
+
+void file_valid(struct file *file)
+{
+  if(file!=NULL)
+  {
+    printf("test : %p",file);
+    printf(" %c\n\n", file->deny_write ? '1' : '0');
+  }
+}
