@@ -48,9 +48,9 @@ tid_t process_execute(const char *file_name)
   strlcpy(fn_copy, file_name, PGSIZE);
   
   //Make New thread name
-  char* new_file_name;
+  char* new_file_name = NULL;
   int temp_argc;
-  char **temp_argv;
+  char **temp_argv = NULL;
   new_file_name = (char *)malloc((1 + strlen(file_name)) * sizeof(char));
   if(new_file_name == NULL)
   {
@@ -74,6 +74,13 @@ tid_t process_execute(const char *file_name)
   tid = thread_create(temp_argv[0], PRI_DEFAULT, start_process, fn_copy);
   
   //Wait the child thread's load ends.
+  if(tid < 0)
+  {
+    palloc_free_page(fn_copy);
+    free(new_file_name);
+    free(temp_argv);
+    return TID_ERROR;
+  }
 
   struct thread* parent = thread_current();
   #ifdef DEBUGPROCESS
@@ -85,18 +92,23 @@ tid_t process_execute(const char *file_name)
   #endif
 
   sema_down(&(child->load_sema));
-  int load_status = 0;
-  load_status = child->exit_status;
-   #ifdef DEBUGPROCESS
+
+
+  #ifdef DEBUGPROCESS
   printf("\n\nload_status : %d\n\n",load_status);
   #endif
-  if(load_status == -1)
+  if(child->load_fail == true)
   {
-    tid = TID_ERROR;
+    palloc_free_page(fn_copy);
+    free(new_file_name);
+    free(temp_argv);
+    return TID_ERROR;
     #ifdef DEBUGPROCESS
     printf("\n\nUnsuccess in process_excute\n\n");
     #endif
   }
+
+  
 
   #ifdef DEBUGPROCESS
   printf("\nProcess_excute %s : child->excute_sema %d\n\n",child->name,child->execute_sema.value);
@@ -106,12 +118,7 @@ tid_t process_execute(const char *file_name)
   printf("\nProcess_excute %s : child->excute_sema %d\n\n",child->name,child->execute_sema.value);
   printf("\n\nExcute :  Start Please!!\n\n");
   #endif
-
-  free(new_file_name);
-  free(temp_argv);
-  if (tid == TID_ERROR)
-    palloc_free_page(fn_copy);
-    
+ 
   return tid;
 }
 
@@ -147,6 +154,7 @@ start_process(void *file_name_)
     printf("\n\nUnsuccess in start_process\n\n");
     #endif
     child->exit_status = -1;
+    child->load_fail = true;
     //palloc_free_page(file_name);
   } 
   sema_up(&(child->load_sema));
@@ -161,7 +169,7 @@ start_process(void *file_name_)
 
   /* If load failed, quit. */
   if (!success)
-  { 
+  {
     thread_exit();
   }
 
@@ -199,7 +207,7 @@ int process_wait(tid_t child_tid UNUSED)
   #endif
 
   //1. Find the Child and If Cannot find the direct child, return -1
-  child = getChild_byList_nonremove(parent, child_tid);
+  child = getChild_byList(parent, child_tid);
   if(child == NULL)
     return -1;
   if(child_tid != child->tid)
@@ -208,11 +216,13 @@ int process_wait(tid_t child_tid UNUSED)
   //2. If the thread of this pid is the same with its parent 
   //it means that this pid has already been waiting
   //So return -1
-  if(child->has_been_waiting)
-    return -1;
+  //if(child->has_been_waiting)
+  //  return -1;
 
   //3. You first wait for this tid, the thread of this tid lose its parent. 
-  child->has_been_waiting = true;
+  //child->has_been_waiting = true;
+
+  //getChild_byList(child->elem_child);
 
   //4. Wait for the exit of child
   sema_down(&(child->wait_sema));
@@ -238,16 +248,11 @@ void process_exit(void)
   uint32_t *pd;
 
 /* Start Added Context of Project 1-2 */
-
-  if(cur->fd_table != NULL)
-  {
-   while(cur->table_top)
-   {
-     --(cur->table_top);
-     file_close(cur->fd_table[(cur->table_top)]);
-   }
-  free(cur->fd_table);
-  } 
+  
+ 
+   int i;
+   for(i=0;i<MAX_OPENFILE;i++)
+    file_close(cur->fd_table[i]);
 
   //printf("test exit : %p\n", cur->processfile);
   

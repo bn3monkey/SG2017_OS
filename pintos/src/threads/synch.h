@@ -4,6 +4,8 @@
 #include <list.h>
 #include <stdbool.h>
 
+//#define SYNTEST
+
 /* A counting semaphore. */
 struct semaphore 
   {

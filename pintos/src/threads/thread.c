@@ -74,7 +74,7 @@ static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
-#ifdef DEBUGTHEAD
+
 static inline void alertAllThread(const char* name)
 {
   printf("%s's all thread\n",name);
@@ -94,28 +94,12 @@ static inline void alertAllThread(const char* name)
      }
     }  
 }
+
+#ifdef DEBUGTHEAD
 static inline void alertChildThread(struct thread* parent)
 {
   struct thread *t;
-  if(parent==NULL)
-    return;
- 
-  if(parent->elem_parent != NULL)
-  {
-    printf("%s's parent thread\n",parent->name);
-    t = list_entry (parent->elem_parent, struct thread, elem_child);
-    printf("tid : %d , name : %s status : ", t->tid, t->name);
-    switch(t->status)
-    {
-      case 0 : printf("THREAD_RUNNING\n"); break;
-      case 1 : printf("THREAD_READY\n"); break;
-      case 2 : printf("THREAD_BLOCKED\n"); break;
-      case 3 : printf("THREAD_DYING\n"); break;
-    }
-  }
-  else
-    printf("%s'father go to America\n",parent->name);
-
+   
   printf("%s's child thread\n",parent->name);
 
   struct list_elem* e;
@@ -134,6 +118,8 @@ static inline void alertChildThread(struct thread* parent)
      }
     }  
 }
+
+
 void alertThread(const char* debugmsg, struct thread* t)
 {
   printf("Check in %s\n",debugmsg);
@@ -149,7 +135,59 @@ void alertThread(const char* debugmsg, struct thread* t)
   alertAllThread(t->name);
 
 }
+
+
+static inline void alertSiblingThread(struct thread* sibling)
+{
+  struct thread *t;
+   
+  printf("%s(%d)'s sibling thread\n",sibling->name,sibling->tid);
+
+  struct list_elem* e;
+  for (e = &(sibling->elem_child); e != NULL;
+     e = e->prev)
+   {
+     t = list_entry (e, struct thread, elem_child);
+     if(0<=t->status && t->status<=3)
+     {
+      printf("tid : %d , name : %s status : ", t->tid, t->name);
+       switch(t->status)
+      {
+       
+        case 0 : printf("THREAD_RUNNING\n"); break;
+        case 1 : printf("THREAD_READY\n"); break;
+        case 2 : printf("THREAD_BLOCKED\n"); break;
+        case 3 : printf("THREAD_DYING\n"); break;      
+      }
+     } 
+    }
+  for (e = sibling->elem_child.next; e != NULL;
+    e = e->next)
+   {
+     t = list_entry (e, struct thread, elem_child);
+     if (0 <= t->status && t->status <= 3)
+     {
+       printf("tid : %d , name : %s status : ", t->tid, t->name);
+       switch (t->status)
+       {
+       case 0:
+         printf("THREAD_RUNNING\n");
+         break;
+       case 1:
+         printf("THREAD_READY\n");
+         break;
+       case 2:
+         printf("THREAD_BLOCKED\n");
+         break;
+       case 3:
+         printf("THREAD_DYING\n");
+         break;
+       }
+     }
+   }
+}
 #endif
+
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
    general and it is possible in this case only because loader.S
@@ -258,7 +296,9 @@ thread_create (const char *name, int priority,
   /* Allocate thread. */
   t = palloc_get_page (PAL_ZERO);
   if (t == NULL)
+  {
     return TID_ERROR;
+  }
 
   /* Initialize thread. */
   init_thread (t, name, priority);
@@ -273,27 +313,21 @@ thread_create (const char *name, int priority,
   alertThread("thread_create : child", t);
   #endif
   
-  //link parent and child
-  #ifdef DEBUGTHREAD
-  t->elem_parent = &(current->elem_child); 
-  #endif
-  list_push_back(&(current->list_child), &(t->elem_child));
   /* End Added Context of Project 1 */
 
   /* Start Added Context of Project 1- 2 */
   
-  t->fd_table = (struct file**)malloc(sizeof(struct file *)*MAX_OPENFILE);
-  
-  if(t->fd_table == NULL)
-  {
-    palloc_free_page(t);
-    return TID_ERROR;
-  }
 
   //when if you fail to make fd_table, destroy new thread t and return tid_error.
 
   /* End Added Context of Project 1 -2 */
 
+  //link parent and child
+  #ifdef DEBUGTHREAD
+  t->elem_parent = &(current->elem_child); 
+  #endif
+  list_push_back(&(current->list_child), &(t->elem_child));
+  
 
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
@@ -362,7 +396,7 @@ thread_unblock (struct thread *t)
 }
 
 /* Returns the name of the running thread. */
-const char *
+const char *    
 thread_name (void) 
 {
   return thread_current ()->name;
@@ -434,49 +468,39 @@ thread_exit (void)
    // Disconnect the connection of parent and child.
    // 호적에서 파버린다.
 
+ if(current->load_fail == true)
+ {
+    list_remove (&current->elem_child);
+ }
+
   struct list* childlist = &(current->list_child);
   struct list_elem* childelem;
   struct thread* child;
-  
+
+  //alertSiblingThread(current);
   
   for (childelem = list_begin (childlist); childelem != list_end (childlist);)
   {
     child = list_entry(childelem, struct thread, elem_child);
-    if(child->has_been_waiting == false)
-    {
-      childelem = list_remove(childelem);
-      sema_up(&(child->dead_sema));  
-    }
-    else 
-      childelem = list_next (childelem);
-  }
-  
-  /*
-  while(!list_empty(childlist))
-  {
-    child = list_pop_front(childlist);
-    sema_up(&(child->dead_sema));
-  }
-  */
-  
 
-/*
-  while(!list_empty(childlist))
-  {
-    printf("%s\n",getChild_byElem(list_pop_front (childlist))->name);
+    childelem = list_remove(childelem);
+    sema_up(&(child->dead_sema));  
+
   }
-*/
+
+  ASSERT(list_empty(childlist));
+
   sema_up(&(current->wait_sema));
-
- 
 
   sema_down(&(current->dead_sema));
 
   /* End Added Context of Project 1 */
 
- if(current->has_been_waiting == true)
-    list_remove (&current->elem_child);
+  //alertAllThread(current->name);
   list_remove (&current->allelem);
+
+  //alertAllThread(current->name);
+
   current->status = THREAD_DYING;
   intr_disable ();
 
@@ -649,8 +673,8 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
-  list_push_back (&all_list, &t->allelem);
   t->exit_status = 0;
+  list_push_back (&all_list, &t->allelem);  
 
   /* Start Added Context of Project 1 */
   //init the variable of struct thread that is added in Project 1
@@ -674,13 +698,16 @@ init_thread (struct thread *t, const char *name, int priority)
   sema_init_wait(&(t->execute_sema));
   
   //First, has_been_waiting is false
-  t->has_been_waiting = false; 
-
+  //t->has_been_waiting = false; 
+  t->load_fail = false;
   /* End Added Context of Project 1 */
 
   /* Start Added Context of Project 1-2 */
   //Share the file lock and this file lock uses for making critical section
   t->table_top = 0;
+  int i;
+  for(i=0;i<MAX_OPENFILE;i++)
+    t->fd_table[i] = NULL;
   t->processfile = NULL;
   /* End Added Context of Project 1-2 */
 }
@@ -819,9 +846,12 @@ struct thread* getChild_byList(struct thread* t, tid_t tid)
   for (childelem = list_begin (childlist); childelem != list_end (childlist);
   childelem = list_next (childelem))
   {
-    child = getChild_byElem(list_remove(childelem));
+    child = getChild_byElem(childelem);
     if(child->tid == tid)
+    {
+      list_remove(childelem);
       return child;
+    }
   }
   return NULL;
 }

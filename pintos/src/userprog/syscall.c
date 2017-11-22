@@ -100,24 +100,20 @@ void force_exit(void)
   file_lock_force_release();
   s_exit(-1);
 }
-static void validate_user_vaddr(void* p)
+static bool validate_user_vaddr(void* p)
 {
   //if pointer is NULL, it's ERROR!
-  if(p == NULL)
+  if(is_kernel_vaddr(p) || p==NULL)
   {
     #ifdef DEBUGARG
     printf("the pointer lack : %p\n", p);
     #endif
     force_exit();
+    NOT_REACHED();
+    return false;
   }
-  //if pointer is kernel_vaddr, it's ERROR!
-  if(is_kernel_vaddr(p))
-  {
-    #ifdef DEBUGARG
-    printf("the pointer lack : %p\n", p);
-    #endif
-    force_exit();
-  }
+  ASSERT2(!(is_kernel_vaddr(p) || p==NULL), p);
+  return true;
 }  
 
 
@@ -177,12 +173,15 @@ static int sys_arg_int(int arg, struct intr_frame *f UNUSED)
 static char* sys_arg_str(int arg, struct intr_frame *f UNUSED)
 {
   //Validity Check of Stack Pointer
-  validate_user_vaddr(f->esp+sys_arg_gap(arg));
+  validate_user_vaddr((void *)((f->esp)+sys_arg_gap(arg)));
   char* temp = sys_in(arg, char *);
   char* ptr = temp;
+  char* file = ptr;
+  validate_user_vaddr((void *)ptr);
   while(*ptr != '\0')
   {
-    validate_user_vaddr(ptr);
+    file = ptr;
+    validate_user_vaddr((void *)ptr);
     ptr++;
   }
 
@@ -234,7 +233,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 static void sys_func_halt(struct intr_frame *f UNUSED)
 {
   //When halt or exit, you ignore previous call
-  //file_lock_force_release();
+  file_lock_force_release();
   //file_lock_release();
   s_halt();
   NOT_REACHED();
@@ -242,7 +241,7 @@ static void sys_func_halt(struct intr_frame *f UNUSED)
 static void sys_func_exit (struct intr_frame *f)
 {
   //When halt or exit, you ignore previous call
-  //file_lock_force_release();
+  file_lock_force_release();
   //file_lock_release();
   s_exit(
       sys_arg_int(FUNC_ARG1, f)
@@ -423,6 +422,11 @@ int s_open (const char *file)
   struct thread* current = thread_current();
   struct file* temp;
 
+  if(is_kernel_vaddr(file) || file == NULL)
+    return -1;
+  
+  //ASSERT2(is_kernel_vaddr(file) || file == NULL, file);
+  
   temp = filesys_open(file);
   if(temp==NULL)
     return -1;

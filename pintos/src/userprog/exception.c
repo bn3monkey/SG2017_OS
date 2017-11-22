@@ -155,8 +155,9 @@ page_fault (struct intr_frame *f)
     s_exit(-1);
   if(!user)
     s_exit(-1);
+
   if(fault_addr == NULL || is_kernel_vaddr(fault_addr))
-    s_exit(-1);
+    s_exit(-1);    
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to
@@ -166,6 +167,8 @@ page_fault (struct intr_frame *f)
           not_present ? "not present" : "rights violation",
           write ? "writing" : "reading",
           user ? "user" : "kernel");
+
+
   kill (f);
 }
 

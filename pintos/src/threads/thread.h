@@ -110,7 +110,9 @@ typedef int tid_t;
 
     struct semaphore dead_sema; /* lock before the parent's dying! */
     struct semaphore wait_sema; /* lock for using the parent's wait! */
-    bool has_been_waiting; // checked when this thread has been waiting
+
+    //bool has_been_waiting; // checked when this thread has been waiting
+    bool load_fail;
     int exit_status; // the status of exit
 
     struct semaphore load_sema; /* for maintaining process_execute while load ends */
@@ -119,7 +121,7 @@ typedef int tid_t;
     /* End Added Context of Project 1 */
 
     /* Start Added Context of Project 1-2 */
-    struct file** fd_table; /* FILE DESCRIPTOR TABLE */
+    struct file* fd_table[MAX_OPENFILE]; /* FILE DESCRIPTOR TABLE */
     int table_top; // table is managed like stack, so it has a top. 
     struct file* processfile; /* the process file. it cannot be written while process ends. */
     
