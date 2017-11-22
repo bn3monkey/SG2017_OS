@@ -17,6 +17,7 @@
 #endif
 #include "filesys/file.h"
 #include "devices/timer.h"
+#include "threads/fixed_point.h"
 
 /* Random value for struct thread's `magic' member.
    Used to detect stack overflow.  See the big comment at the top
@@ -25,7 +26,7 @@
 
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
-static struct list ready_list;
+static struct list ready_list[PRI_MAX+1];
 
 /* Start Added Context of Project 2 */
 //List which is sleeping
@@ -212,9 +213,10 @@ void
 thread_init (void) 
 {
   ASSERT (intr_get_level () == INTR_OFF);
-
+  int i;
   lock_init (&tid_lock);
-  list_init (&ready_list);
+  for(i=0;i<=PRI_MAX;i++)
+    list_init (&ready_list[i]);
   list_init (&all_list);
 
   /* Start Added Context of Project 2 */
@@ -261,6 +263,12 @@ thread_tick (void)
 #endif
   else
     kernel_ticks++;
+
+  //if(thread_tick()%TIMER_FREQ == 0)
+  //
+
+  //if(thread_tick()%4==0)
+    //for문 돌면서 모든 thread에 대하여 priority 재계산
 
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
@@ -325,12 +333,10 @@ thread_create (const char *name, int priority,
   
   /* End Added Context of Project 1 */
 
-  /* Start Added Context of Project 1- 2 */
-  
-
-  //when if you fail to make fd_table, destroy new thread t and return tid_error.
-
-  /* End Added Context of Project 1 -2 */
+  /* Start Added Context of Project 2 */
+  ASSERT(NICE_MIN <= current->nice && current->nice <= NICE_MAX);
+  t->nice = current->nice;
+  /* End Added Context of Project 2 */
 
   //link parent and child
   #ifdef DEBUGTHREAD
@@ -400,8 +406,13 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_push_back (&ready_list, &t->elem);
+  /* Start Added Context of Project 2 */
+  list_push_back (&ready_list[t->priority], &t->elem);
   t->status = THREAD_READY;
+
+  if(t->priority > currnet->priority)
+    thread_yield();
+/* End Added Context of Project 2 */
   intr_set_level (old_level);
 }
 
@@ -530,7 +541,7 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (cur != idle_thread) 
-    list_push_back (&ready_list, &cur->elem);
+    list_push_back (&ready_list[cur->priority], &cur->elem);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -572,14 +583,18 @@ void
 thread_set_nice (int nice UNUSED) 
 {
   /* Not yet implemented. */
+   ASSERT(NICE_MIN <= current->nice && current->nice <= NICE_MAX);
+   current->nice = nice;
+
 }
 
 /* Returns the current thread's nice value. */
 int
 thread_get_nice (void) 
 {
+  struct thread* current = thread_current();
   /* Not yet implemented. */
-  return 0;
+  return current->nice;
 }
 
 /* Returns 100 times the system load average. */
@@ -682,6 +697,7 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
+  t->nice = 0;
   t->magic = THREAD_MAGIC;
   t->exit_status = 0;
   list_push_back (&all_list, &t->allelem);  
@@ -743,10 +759,12 @@ alloc_frame (struct thread *t, size_t size)
 static struct thread *
 next_thread_to_run (void) 
 {
-  if (list_empty (&ready_list))
-    return idle_thread;
-  else
-    return list_entry (list_pop_front (&ready_list), struct thread, elem);
+  for(int i=PRI_MIN;i<=PRI_MAX;i++)
+  {
+    if(!list_empty(&ready_list[i]))
+      return list_entry (list_pop_front (&ready_list[i]), struct thread, elem);
+  }
+  return idle_thread;
 }
 
 /* Completes a thread switch by activating the new thread's page

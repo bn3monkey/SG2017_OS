@@ -28,6 +28,11 @@ typedef int tid_t;
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
 
+/* Start Added Context of Project 2 */
+#define NICE_MAX 20
+#define NICE_MIN -20
+/* End Added Context of Project 2 */
+
 #define MAX_OPENFILE 128
 
 /* A kernel thread or user process.
@@ -127,6 +132,8 @@ typedef int tid_t;
     
     /* Start Added Context of Project 2 */
     int64_t end_sleep;
+    int nice;
+
     /* End Added Context of Project 2 */
 
 #ifdef USERPROG
@@ -189,7 +196,7 @@ void alertThread(const char* debugmsg, struct thread* t);
 /* Start Added COntext of Project 2 */
 struct thread* getThread_byElem(struct list_elem * elem);
 
-void thread_sleep(int64_t start, int64_t end);
+void thread_sleep(int64_t end);
 
 void thread_awake(void);
 /* End Added COntext of Project 2 */

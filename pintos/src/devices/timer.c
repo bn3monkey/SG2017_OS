@@ -92,7 +92,7 @@ timer_sleep (int64_t ticks)
   int64_t start = timer_ticks ();
   /* Start Added Context of Project 2 */
   ASSERT (intr_get_level () == INTR_ON);
-  thread_sleep(start + end);
+  thread_sleep(start + ticks);
   /* End Added Context of Project 2 */
 }
 
