@@ -8,6 +8,10 @@
 //#include "filesys/filesys.h"
 
 //#define DEBUGTHREAD
+#ifndef USERPROG
+extern bool thread_prior_aging;
+#endif
+
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -133,7 +137,7 @@ typedef int tid_t;
     /* Start Added Context of Project 2 */
     int64_t end_sleep;
     int nice;
-
+    int recent_cpu; //fixed
     /* End Added Context of Project 2 */
 
 #ifdef USERPROG
@@ -194,6 +198,11 @@ void alertThread(const char* debugmsg, struct thread* t);
 /* End Added Context of Project 1 */
 
 /* Start Added COntext of Project 2 */
+bool less_thread_endsleep(const struct list_elem* a, const struct list_elem* b, void* aux);
+bool greater_thread_priority(const struct list_elem* a, const struct list_elem* b, void* aux);
+
+void priority_update();
+
 struct thread* getThread_byElem(struct list_elem * elem);
 
 void thread_sleep(int64_t end);

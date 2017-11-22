@@ -64,6 +64,10 @@ static long long user_ticks;    /* # of timer ticks in user programs. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
 static unsigned thread_ticks;   /* # of timer ticks since last yield. */
 
+#ifndef USERPROG
+bool thread_prior_aging;
+#endif
+
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
    Controlled by kernel command-line option "-o mlfqs". */
@@ -216,7 +220,7 @@ thread_init (void)
   int i;
   lock_init (&tid_lock);
   for(i=0;i<=PRI_MAX;i++)
-    list_init (&ready_list[i]);
+    list_init (ready_list+i);
   list_init (&all_list);
 
   /* Start Added Context of Project 2 */
@@ -273,6 +277,11 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
+
+  if(thread_prior_aging || thread_mlfqs)
+  {
+    priority_update();
+  }
 }
 
 /* Prints thread statistics. */
@@ -336,6 +345,9 @@ thread_create (const char *name, int priority,
   /* Start Added Context of Project 2 */
   ASSERT(NICE_MIN <= current->nice && current->nice <= NICE_MAX);
   t->nice = current->nice;
+  t->recent_cpu = current->cpu;
+
+  //t->priority = current->priority;
   /* End Added Context of Project 2 */
 
   //link parent and child
@@ -407,13 +419,13 @@ thread_unblock (struct thread *t)
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
   /* Start Added Context of Project 2 */
-  list_push_back (&ready_list[t->priority], &t->elem);
+  ASSERT(PRI_MIN <= t->priority && t->priority <= PRI_MAX);
+  list_push_back (ready_list+(t->priority), &t->elem);
   t->status = THREAD_READY;
 
-  if(t->priority > currnet->priority)
-    thread_yield();
-/* End Added Context of Project 2 */
+  /* End Added Context of Project 2 */
   intr_set_level (old_level);
+
 }
 
 /* Returns the name of the running thread. */
@@ -540,8 +552,11 @@ thread_yield (void)
   ASSERT (!intr_context ());
 
   old_level = intr_disable ();
-  if (cur != idle_thread) 
-    list_push_back (&ready_list[cur->priority], &cur->elem);
+  if (cur != idle_thread)
+  {
+    ASSERT(PRI_MIN <= cur->priority && cur->priority <= PRI_MAX);
+    list_push_back (ready_list+(cur->priority), &cur->elem);
+  }
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -582,10 +597,11 @@ thread_get_priority (void)
 void
 thread_set_nice (int nice UNUSED) 
 {
+  struct thread* current = thread_current();
   /* Not yet implemented. */
    ASSERT(NICE_MIN <= current->nice && current->nice <= NICE_MAX);
    current->nice = nice;
-
+  priority_update();
 }
 
 /* Returns the current thread's nice value. */
@@ -698,6 +714,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->nice = 0;
+  t->recent_cpu = 0;
   t->magic = THREAD_MAGIC;
   t->exit_status = 0;
   list_push_back (&all_list, &t->allelem);  
@@ -759,10 +776,11 @@ alloc_frame (struct thread *t, size_t size)
 static struct thread *
 next_thread_to_run (void) 
 {
-  for(int i=PRI_MIN;i<=PRI_MAX;i++)
+  int i;
+  for(i=PRI_MAX;i>=PRI_MIN;i--)
   {
-    if(!list_empty(&ready_list[i]))
-      return list_entry (list_pop_front (&ready_list[i]), struct thread, elem);
+    if(!list_empty(ready_list+i))
+      return list_entry (list_pop_front (ready_list+i), struct thread, elem);
   }
   return idle_thread;
 }
@@ -909,7 +927,8 @@ static struct thread* getThread_byElem_const(const struct list_elem * elem)
 {
   return list_entry (elem, struct thread, elem);
 }
-static bool less_thread_endsleep(const struct list_elem* a, const struct list_elem* b, void* aux)
+
+bool less_thread_endsleep(const struct list_elem* a, const struct list_elem* b, void* aux)
 {
   ASSERT(aux==NULL);
 
@@ -917,6 +936,16 @@ static bool less_thread_endsleep(const struct list_elem* a, const struct list_el
     return true;
   return false;
 }
+bool greater_thread_priority(const struct list_elem* a, const struct list_elem* b, void* aux)
+{
+  ASSERT(aux==NULL);
+
+  if(getThread_byElem_const(a)->priority > getThread_byElem_const(b)->priority)
+    return true;
+  return false;
+}
+
+
 void thread_sleep(int64_t end)
 {
    //현재 list를 재운다.
@@ -965,7 +994,17 @@ void thread_awake(void)
     { 
       list_pop_front(&sleep_list);
       thread_unblock(wake_thread);  
+      if(wake_thread==NULL)
+        return;
+      ASSERT(PRI_MIN <= wake_thread->priority && wake_thread->priority <= PRI_MAX);
+      if(intr_context()==false && wake_thread->priority > thread_current()->priority)
+        thread_yield ();
     }
   }
+}
+
+void priority_update()
+{
+
 }
 /* End Added COntext of Project 2 */

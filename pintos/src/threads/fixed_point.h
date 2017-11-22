@@ -1,3 +1,5 @@
+
+
 const int fpt = 1 << 14;
 #define tofixed(n) ((n)*fpt)
 #define toint(x) ((x)/fpt)
@@ -10,3 +12,4 @@ const int fpt = 1 << 14;
 #define multcompound(x,n) ((x)*(n))
 #define divfixed(x,y) ((int64_t)(x)*(fpt)/(y))
 #define divcompound(x,n) ((x)/(n))
+
