@@ -125,7 +125,9 @@ typedef int tid_t;
     int table_top; // table is managed like stack, so it has a top. 
     struct file* processfile; /* the process file. it cannot be written while process ends. */
     
-
+    /* Start Added Context of Project 2 */
+    int64_t end_sleep;
+    /* End Added Context of Project 2 */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -183,5 +185,13 @@ struct thread* getChild_byList_nonremove(struct thread* t, tid_t tid);
 
 void alertThread(const char* debugmsg, struct thread* t);
 /* End Added Context of Project 1 */
+
+/* Start Added COntext of Project 2 */
+struct thread* getThread_byElem(struct list_elem * elem);
+
+void thread_sleep(int64_t start, int64_t end);
+
+void thread_awake(void);
+/* End Added COntext of Project 2 */
 
 #endif /* threads/thread.h */

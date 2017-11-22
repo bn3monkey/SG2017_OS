@@ -16,6 +16,7 @@
 #include "userprog/process.h"
 #endif
 #include "filesys/file.h"
+#include "devices/timer.h"
 
 /* Random value for struct thread's `magic' member.
    Used to detect stack overflow.  See the big comment at the top
@@ -25,6 +26,11 @@
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
 static struct list ready_list;
+
+/* Start Added Context of Project 2 */
+//List which is sleeping
+static struct list sleep_list;
+/* End Added Context of Project 2 */
 
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
@@ -210,6 +216,10 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
+
+  /* Start Added Context of Project 2 */
+  list_init(&sleep_list);
+  /* End Added Context of Project 2 */
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -871,3 +881,73 @@ struct thread* getChild_byList_nonremove(struct thread* t, tid_t tid)
   return NULL;
 }
 /* End Added Context of Project 1 */
+
+/* Start Added COntext of Project 2 */
+struct thread* getThread_byElem(struct list_elem * elem)
+{
+  return list_entry (elem, struct thread, elem);
+}
+static struct thread* getThread_byElem_const(const struct list_elem * elem)
+{
+  return list_entry (elem, struct thread, elem);
+}
+static bool less_thread_endsleep(const struct list_elem* a, const struct list_elem* b, void* aux)
+{
+  ASSERT(aux==NULL);
+
+  if(getThread_byElem_const(a)->end_sleep <= getThread_byElem_const(b)->end_sleep)
+    return true;
+  return false;
+}
+void thread_sleep(int64_t end)
+{
+   //현재 list를 재운다.
+  struct thread *sleep_thread;
+  
+  
+  sleep_thread = thread_current();
+
+  //Unless the system is otherwise idle,
+  ASSERT (sleep_thread  != idle_thread);
+
+  //재울 리스트를 재운다.
+  sleep_thread->end_sleep = end;
+
+  //sleeplist에 넣는다.
+  
+  //critical section start
+  enum intr_level old_level;
+  old_level = intr_disable ();
+
+  //list는 빨리 끝나는 순서대로 정렬된다.
+  list_insert_ordered(&sleep_list,&(sleep_thread->elem),less_thread_endsleep,NULL);
+
+  thread_block();
+
+  intr_set_level (old_level);
+  //crictical section end
+
+}
+
+void thread_awake(void)
+{
+  struct thread *wake_thread = NULL;
+  // sleep_list에 있는 것 중, 기다릴 만큼 기다린 것들은 빠진다.
+  // list 비어있으면 돌아갈 필요가 없다.
+  while(!list_empty(&sleep_list))
+  {
+    wake_thread = getThread_byElem(list_front(&sleep_list));
+    ASSERT(is_thread(wake_thread));
+    // 맨 앞에 있는 것이 제일 빨리 나갈 때인지라
+    // 맨 앞의 있는 쓰레드가 아직 나갈 때가 아니면 뒤에 있는 것도 다 나갈 때가 아니니 멈춘다.
+    if(timer_ticks() < wake_thread->end_sleep)
+      break;
+    // 나갈 때가 되면, block을 풀어준다.
+    else
+    { 
+      list_pop_front(&sleep_list);
+      thread_unblock(wake_thread);  
+    }
+  }
+}
+/* End Added COntext of Project 2 */
