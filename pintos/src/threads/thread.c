@@ -31,7 +31,10 @@ static struct list ready_list[PRI_MAX+1];
 /* Start Added Context of Project 2 */
 //List which is sleeping
 static struct list sleep_list;
-static int load_avg = 0; //fixed_point 자료형
+static int load_avg; //fixed_point 자료형
+#define NICE_DEFAULT 0
+#define RECENT_CPU_DEFAULT 0
+#define LOAD_AVG_DEFAULT 0
 /* End Added Context of Project 2 */
 
 /* List of all processes.  Processes are added to this list
@@ -245,6 +248,8 @@ thread_start (void)
   sema_init (&start_idle, 0);
   thread_create ("idle", PRI_MIN, idle, &start_idle);
 
+  load_avg  = LOAD_AVG_DEFAULT;
+
   /* Start preemptive thread scheduling. */
   intr_enable ();
 
@@ -270,18 +275,21 @@ thread_tick (void)
   else
     kernel_ticks++;
 
+if(/*thread_prior_aging || */thread_mlfqs)
+{
+  recent_cpu_increment();
+  if(thread_ticks%4==0)
+  {
+      yieldflag = priority_update(t, false); 
+  }
   if(thread_ticks%TIMER_FREQ == 0)
   {
     load_avg_update();
     recent_cpu_allupdate();
+    yieldflag = priority_allupdate(false);
   }
-  if(thread_ticks%4==0)
-  {
-    if(thread_prior_aging || thread_mlfqs)
-    {
-      yieldflag = priority_allupdate(false);
-    }
-  }
+  
+}
   //for문 돌면서 모든 thread에 대하여 priority 재계산
 
   /* Enforce preemption. */
@@ -609,6 +617,9 @@ void
 thread_set_priority (int new_priority) 
 {
   struct thread* current = thread_current();
+  if(thread_mlfqs == true)
+    return;
+
   if(current==NULL || current==idle_thread)
     return;
   current->priority = new_priority;
@@ -654,13 +665,15 @@ int
 thread_get_load_avg (void) 
 {
   /* Not yet implemented. */
-    return toint_r(
+    int temp;
+    temp = toint_r(
           multcompound(
             load_avg,
             100
             )
           );
-  return 0;
+    //ASSERT3(load_avg,temp)
+    return temp;
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
@@ -760,8 +773,8 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
-  t->nice = 0;
-  t->recent_cpu = 0;
+  t->nice = NICE_DEFAULT;
+  t->recent_cpu = RECENT_CPU_DEFAULT;
   t->magic = THREAD_MAGIC;
   t->exit_status = 0;
   list_push_back (&all_list, &t->allelem);  
@@ -1083,22 +1096,18 @@ bool priority_allupdate(bool yieldflag)
 bool priority_update(struct thread* t, bool yieldflag)
 {
   //priority = PRI_MAX - (recent_cpu / 4) - (nice * 2),
-  t->priority = 
-    toint
-    (
-      addcompound
-      (
-        -divcompound
-        (
-          t->recent_cpu,
-          4
-        ),
-        PRI_MAX
-      )
-      -2*(t->nice)
-    );
   if(t==NULL || t==idle_thread)
-    return;
+    return false;
+  int temp1, temp2, temp3; //all fixed
+  temp1 = tofixed(PRI_MAX);
+  temp2 = tofixed(divcompound(t->recent_cpu, 4));
+  temp3 = multcompound(tofixed(t->nice),2);
+  temp1 = subfixed(temp1, temp2);
+  temp1 = subfixed(temp1, temp3);
+  temp1 = toint(temp1);
+
+  t->priority = temp1;
+  
   if(t->priority > PRI_MAX)
     t->priority = PRI_MAX;
   if(t->priority < PRI_MIN)
@@ -1115,7 +1124,7 @@ bool priority_update(struct thread* t, bool yieldflag)
 void recent_cpu_allupdate(void)
 {
   struct list_elem* e;
-  struct thread *t, *current = thread_current();
+  struct thread *t;
   int i;
 
   for (i = 0; i <= PRI_MAX; i++)
@@ -1132,28 +1141,19 @@ void recent_cpu_allupdate(void)
 void recent_cpu_update(struct thread *t)
 {
   load_avg = tofixed(load_avg);
-  t->recent_cpu =
-  addcompound
-  (
-    divfixed
-    (
-      multcompound
-      (
-        load_avg,
-        2
-      ),
-      addcompound
-      (
-        multcompound
-        (
-          load_avg,
-          2
-        ),
-        1
-      )
-    ),
-    t->nice
-  );
+  /*fixed*/int dload_avg = multcompound(load_avg,2);
+  int temp2 = addcompound(dload_avg,1);
+  int temp3 = tofixed(t->nice);
+
+  dload_avg = divfixed(dload_avg,temp2);
+  dload_avg = addfixed(dload_avg,temp3);
+  t->recent_cpu = dload_avg;  
+}
+void recent_cpu_increment(void)
+{
+  if (thread_current () == idle_thread)
+    return;
+  thread_current ()->recent_cpu = addcompound(thread_current ()->recent_cpu,1);
 }
 void load_avg_update(void)
 {
@@ -1166,25 +1166,11 @@ void load_avg_update(void)
   if(thread_current() != idle_thread)
     ready_thread+=1;
 
-  load_avg =
-
-    addfixed(
-      multfixed(
-          divfixed(
-              tofixed(59),
-              tofixed(60)
-          ),
-          load_avg
-        ),
-      multcompound(
-        divfixed(
-          tofixed(1),
-          tofixed(60)
-        ),
-        ready_thread
-      )
-    );
-      
+  int most = divfixed(tofixed(59),tofixed(60));
+  int least = divfixed(tofixed(1),tofixed(60));
+  most = multfixed(most, load_avg);
+  least = multfixed(least, tofixed(ready_thread));
+  load_avg = addfixed(most, least); 
 }
 
 struct thread *

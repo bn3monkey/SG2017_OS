@@ -38,8 +38,8 @@ void debug_backtrace_all (void);
 #define NOT_REACHED() PANIC ("executed an unreachable statement");
 
 
-#define ASSERT2(A,B) PANIC("thread name : (%s:%d) | thread name : (%s:%d)\n",A->name,A->priority, B->name,B->priority);               \
-        
+#define ASSERT2(A,B) PANIC("thread name : (%s:%d) | thread name : (%s:%d)\n",A->name,A->priority, B->name,B->priority);
+#define ASSERT3(A,B) PANIC("%s : %d\n",#A,B);        
 //PANIC ("\nthread name : %s(%d %p) %s(%d %p)\n", thread_current()->name,thread_current()->tid,thread_current(), lock->holder->name, lock->holder->tid,lock->holder);   
 
 #else

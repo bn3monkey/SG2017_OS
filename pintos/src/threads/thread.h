@@ -208,6 +208,7 @@ bool priority_update(struct thread* t, bool yieldflag);
 //yield해야 되면 true다. 
 bool priority_allupdate(bool yieldflag);
 
+void recent_cpu_increment(void);
 void recent_cpu_update(struct thread *t);
 void recent_cpu_allupdate(void);
 

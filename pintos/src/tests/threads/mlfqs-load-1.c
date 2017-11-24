@@ -44,7 +44,7 @@ test_mlfqs_load_1 (void)
   if (elapsed < 38)
     fail ("load average took only %d seconds to rise above 0.5", elapsed);
   msg ("load average rose to 0.5 after %d seconds", elapsed);
-
+ 
   msg ("sleeping for another 10 seconds, please wait...");
   timer_sleep (TIMER_FREQ * 10);
 
