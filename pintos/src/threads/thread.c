@@ -31,6 +31,7 @@ static struct list ready_list[PRI_MAX+1];
 /* Start Added Context of Project 2 */
 //List which is sleeping
 static struct list sleep_list;
+static int load_avg = 0; //fixed_point 자료형
 /* End Added Context of Project 2 */
 
 /* List of all processes.  Processes are added to this list
@@ -76,8 +77,8 @@ bool thread_mlfqs;
 static void kernel_thread (thread_func *, void *aux);
 
 static void idle (void *aux UNUSED);
+static struct thread* next_thread_to_run (void);
 static struct thread *running_thread (void);
-static struct thread *next_thread_to_run (void);
 static void init_thread (struct thread *, const char *name, int priority);
 static bool is_thread (struct thread *) UNUSED;
 static void *alloc_frame (struct thread *, size_t size);
@@ -257,6 +258,7 @@ void
 thread_tick (void) 
 {
   struct thread *t = thread_current ();
+  bool yieldflag = true;
 
   /* Update statistics. */
   if (t == idle_thread)
@@ -268,20 +270,24 @@ thread_tick (void)
   else
     kernel_ticks++;
 
-  //if(thread_tick()%TIMER_FREQ == 0)
-  //
-
-  //if(thread_tick()%4==0)
-    //for문 돌면서 모든 thread에 대하여 priority 재계산
+  if(thread_ticks%TIMER_FREQ == 0)
+  {
+    load_avg_update();
+    recent_cpu_allupdate();
+  }
+  if(thread_ticks%4==0)
+  {
+    if(thread_prior_aging || thread_mlfqs)
+    {
+      yieldflag = priority_allupdate(false);
+    }
+  }
+  //for문 돌면서 모든 thread에 대하여 priority 재계산
 
   /* Enforce preemption. */
-  if (++thread_ticks >= TIME_SLICE)
+  if (++thread_ticks >= TIME_SLICE && yieldflag)
     intr_yield_on_return ();
 
-  if(thread_prior_aging || thread_mlfqs)
-  {
-    priority_update();
-  }
 }
 
 /* Prints thread statistics. */
@@ -345,7 +351,7 @@ thread_create (const char *name, int priority,
   /* Start Added Context of Project 2 */
   ASSERT(NICE_MIN <= current->nice && current->nice <= NICE_MAX);
   t->nice = current->nice;
-  t->recent_cpu = current->cpu;
+  t->recent_cpu = current->recent_cpu;
 
   //t->priority = current->priority;
   /* End Added Context of Project 2 */
@@ -381,6 +387,14 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
+
+
+  if(intr_context()==false && t->priority > thread_current()->priority)
+  {
+    //ASSERT2(t,thread_current());
+    thread_yield ();
+  }
+
 
   return tid;
 }
@@ -556,6 +570,17 @@ thread_yield (void)
   {
     ASSERT(PRI_MIN <= cur->priority && cur->priority <= PRI_MAX);
     list_push_back (ready_list+(cur->priority), &cur->elem);
+
+    /*
+    if(strcmp(getThread_byElem(list_front(ready_list+cur->priority))->name
+      ,"main")!=0)
+      {
+    ASSERT2(
+      getThread_byElem(list_front(ready_list+cur->priority)),
+      getThread_byElem(list_back(ready_list+cur->priority))
+    );
+      }
+    */
   }
   cur->status = THREAD_READY;
   schedule ();
@@ -583,7 +608,18 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-  thread_current ()->priority = new_priority;
+  struct thread* current = thread_current();
+  if(current==NULL || current==idle_thread)
+    return;
+  current->priority = new_priority;
+  ASSERT(PRI_MIN <= current->priority && current->priority <= PRI_MAX);
+  if(intr_context()==false)
+    if(current->priority < next_thread()->priority)
+    {
+      //ASSERT2(current, next_thread());
+      thread_yield ();
+    }
+
 }
 
 /* Returns the current thread's priority. */
@@ -601,7 +637,7 @@ thread_set_nice (int nice UNUSED)
   /* Not yet implemented. */
    ASSERT(NICE_MIN <= current->nice && current->nice <= NICE_MAX);
    current->nice = nice;
-  priority_update();
+  priority_update(current,true);
 }
 
 /* Returns the current thread's nice value. */
@@ -618,6 +654,12 @@ int
 thread_get_load_avg (void) 
 {
   /* Not yet implemented. */
+    return toint_r(
+          multcompound(
+            load_avg,
+            100
+            )
+          );
   return 0;
 }
 
@@ -626,7 +668,12 @@ int
 thread_get_recent_cpu (void) 
 {
   /* Not yet implemented. */
-  return 0;
+  return toint_r(
+          multcompound(
+            thread_current()->recent_cpu,
+            100
+            )
+          );
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
@@ -773,7 +820,7 @@ alloc_frame (struct thread *t, size_t size)
    empty.  (If the running thread can continue running, then it
    will be in the run queue.)  If the run queue is empty, return
    idle_thread. */
-static struct thread *
+struct thread *
 next_thread_to_run (void) 
 {
   int i;
@@ -997,14 +1044,158 @@ void thread_awake(void)
       if(wake_thread==NULL)
         return;
       ASSERT(PRI_MIN <= wake_thread->priority && wake_thread->priority <= PRI_MAX);
+            
       if(intr_context()==false && wake_thread->priority > thread_current()->priority)
+      {
         thread_yield ();
+      }
     }
   }
 }
-
-void priority_update()
+bool priority_allupdate(bool yieldflag)
 {
+  int i;
+  struct list_elem* e;
+  struct thread* t, *current = thread_current();
 
+  for(i=0;i<=PRI_MAX;i++)
+  {
+    for(e=list_begin(ready_list+i);
+     e!=list_end(ready_list+i);
+       e=list_next(e))
+       {
+         t = getThread_byElem(e);
+         priority_update(t,false);
+       }
+  }
+
+  if(current->priority < next_thread()->priority)
+  {
+    //ASSERT2(current, next_thread());
+    if(yieldflag==true)
+      if(intr_context()==false)
+        thread_yield ();
+    return true;
+  }
+  return false;
+}
+
+bool priority_update(struct thread* t, bool yieldflag)
+{
+  //priority = PRI_MAX - (recent_cpu / 4) - (nice * 2),
+  t->priority = 
+    toint
+    (
+      addcompound
+      (
+        -divcompound
+        (
+          t->recent_cpu,
+          4
+        ),
+        PRI_MAX
+      )
+      -2*(t->nice)
+    );
+  if(t==NULL || t==idle_thread)
+    return;
+  if(t->priority > PRI_MAX)
+    t->priority = PRI_MAX;
+  if(t->priority < PRI_MIN)
+    t->priority = PRI_MIN;
+    
+  if(intr_context()==false && t->priority > thread_current()->priority)
+  {
+    if(yieldflag)
+      thread_yield ();
+    return true;
+  }
+  return false;
+}
+void recent_cpu_allupdate(void)
+{
+  struct list_elem* e;
+  struct thread *t, *current = thread_current();
+  int i;
+
+  for (i = 0; i <= PRI_MAX; i++)
+  {
+    for (e = list_begin(ready_list+i);
+         e != list_end(ready_list+i);
+         e = list_next(e))
+    {
+      t = getThread_byElem(e);
+      recent_cpu_update(t);
+    }
+  }
+}
+void recent_cpu_update(struct thread *t)
+{
+  load_avg = tofixed(load_avg);
+  t->recent_cpu =
+  addcompound
+  (
+    divfixed
+    (
+      multcompound
+      (
+        load_avg,
+        2
+      ),
+      addcompound
+      (
+        multcompound
+        (
+          load_avg,
+          2
+        ),
+        1
+      )
+    ),
+    t->nice
+  );
+}
+void load_avg_update(void)
+{
+  int ready_thread = 0;
+  int i;
+  struct list_elem* e;
+  for(i=0;i<=PRI_MAX;i++)
+    for(e=list_begin(ready_list + i);e!=list_end(ready_list + i);e=list_next(e))
+      ready_thread++;
+  if(thread_current() != idle_thread)
+    ready_thread+=1;
+
+  load_avg =
+
+    addfixed(
+      multfixed(
+          divfixed(
+              tofixed(59),
+              tofixed(60)
+          ),
+          load_avg
+        ),
+      multcompound(
+        divfixed(
+          tofixed(1),
+          tofixed(60)
+        ),
+        ready_thread
+      )
+    );
+      
+}
+
+struct thread *
+next_thread (void) 
+{
+  int i;
+  for(i=PRI_MAX;i>=PRI_MIN;i--)
+  {
+    if(!list_empty(ready_list+i))
+      return list_entry (list_front (ready_list+i), struct thread, elem);
+  }
+  return idle_thread;
 }
 /* End Added COntext of Project 2 */

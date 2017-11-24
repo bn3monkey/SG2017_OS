@@ -173,6 +173,8 @@ const char *thread_name (void);
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
 
+
+
 /* Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func (struct thread *t, void *aux);
 void thread_foreach (thread_action_func *, void *);
@@ -201,13 +203,24 @@ void alertThread(const char* debugmsg, struct thread* t);
 bool less_thread_endsleep(const struct list_elem* a, const struct list_elem* b, void* aux);
 bool greater_thread_priority(const struct list_elem* a, const struct list_elem* b, void* aux);
 
-void priority_update();
+//yield해야 되면 true다.
+bool priority_update(struct thread* t, bool yieldflag);
+//yield해야 되면 true다. 
+bool priority_allupdate(bool yieldflag);
+
+void recent_cpu_update(struct thread *t);
+void recent_cpu_allupdate(void);
+
+void load_avg_update(void);
+
 
 struct thread* getThread_byElem(struct list_elem * elem);
 
 void thread_sleep(int64_t end);
 
 void thread_awake(void);
+
+struct thread* next_thread(void);
 /* End Added COntext of Project 2 */
 
 #endif /* threads/thread.h */
