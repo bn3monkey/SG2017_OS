@@ -203,7 +203,7 @@ void alertThread(const char* debugmsg, struct thread* t);
 bool less_thread_endsleep(const struct list_elem* a, const struct list_elem* b, void* aux);
 bool greater_thread_priority(const struct list_elem* a, const struct list_elem* b, void* aux);
 
-struct list_elem* priority_update(struct thread* t);
+void priority_update(struct thread* t);
 //yield해야 되면 true다. 
 bool priority_allupdate(void);
 
@@ -221,6 +221,8 @@ void thread_sleep(int64_t end);
 void thread_awake(void);
 
 struct thread* next_thread(void);
+
+void printReadythread(void);
 /* End Added COntext of Project 2 */
 
 #endif /* threads/thread.h */
