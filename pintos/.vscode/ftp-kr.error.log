@@ -1,7 +1,7 @@
 [Error]
-message: getaddrinfo ENOENT cspro10.sogang.ac.kr:22[ENOENT]
+message: getaddrinfo ENOTFOUND cspro10.sogang.ac.kr cspro10.sogang.ac.kr:22[ENOTFOUND]
 [Stack Trace]
-Error: getaddrinfo ENOENT cspro10.sogang.ac.kr:22[ENOENT]
+Error: getaddrinfo ENOTFOUND cspro10.sogang.ac.kr cspro10.sogang.ac.kr:22[ENOTFOUND]
 	at _errorWrap (C:\Users\bn3mo\.vscode\extensions\ruakr.ftp-kr-1.1.7\out\ftp.js:529:16)
 	at Object.<anonymous> (C:\Users\bn3mo\.vscode\extensions\ruakr.ftp-kr-1.1.7\out\ftp.js:634:23)
 	at Generator.throw (<anonymous>)

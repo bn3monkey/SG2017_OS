@@ -275,21 +275,21 @@ thread_tick (void)
   else
     kernel_ticks++;
 
-if(/*thread_prior_aging || */thread_mlfqs)
-{
-  recent_cpu_increment();
-  if(thread_ticks%4==0)
+  if(/*thread_prior_aging || */thread_mlfqs)
   {
-      yieldflag = priority_update(t, false); 
+    recent_cpu_increment();
+    if((timer_ticks()+1)%TIMER_FREQ == 0)
+    {
+      load_avg_update();
+      recent_cpu_allupdate();
+    }
+    if((thread_ticks+1)%4==0)
+    {
+        yieldflag = priority_allupdate(); 
+    }
+    //if(t != idle_thread)
+      //printf("cur_tick : %d, flag : %d\n", thread_ticks, yieldflag);
   }
-  if(thread_ticks%TIMER_FREQ == 0)
-  {
-    load_avg_update();
-    recent_cpu_allupdate();
-    yieldflag = priority_allupdate(false);
-  }
-  
-}
   //for문 돌면서 모든 thread에 대하여 priority 재계산
 
   /* Enforce preemption. */
@@ -627,7 +627,6 @@ thread_set_priority (int new_priority)
   if(intr_context()==false)
     if(current->priority < next_thread()->priority)
     {
-      //ASSERT2(current, next_thread());
       thread_yield ();
     }
 
@@ -648,7 +647,12 @@ thread_set_nice (int nice UNUSED)
   /* Not yet implemented. */
    ASSERT(NICE_MIN <= current->nice && current->nice <= NICE_MAX);
    current->nice = nice;
-  priority_update(current,true);
+  priority_update(current);
+  if(current->priority < next_thread()->priority)
+  {
+    if(intr_context() == false)
+        thread_yield();
+  }
 }
 
 /* Returns the current thread's nice value. */
@@ -1010,21 +1014,20 @@ void thread_sleep(int64_t end)
 {
    //현재 list를 재운다.
   struct thread *sleep_thread;
-  
-  
+    
   sleep_thread = thread_current();
 
   //Unless the system is otherwise idle,
   ASSERT (sleep_thread  != idle_thread);
-
-  //재울 리스트를 재운다.
-  sleep_thread->end_sleep = end;
 
   //sleeplist에 넣는다.
   
   //critical section start
   enum intr_level old_level;
   old_level = intr_disable ();
+
+  //재울 리스트를 재운다.
+  sleep_thread->end_sleep = end;
 
   //list는 빨리 끝나는 순서대로 정렬된다.
   list_insert_ordered(&sleep_list,&(sleep_thread->elem),less_thread_endsleep,NULL);
@@ -1056,70 +1059,66 @@ void thread_awake(void)
       thread_unblock(wake_thread);  
       if(wake_thread==NULL)
         return;
-      ASSERT(PRI_MIN <= wake_thread->priority && wake_thread->priority <= PRI_MAX);
-            
-      if(intr_context()==false && wake_thread->priority > thread_current()->priority)
-      {
-        thread_yield ();
-      }
     }
   }
+  if(intr_context()==false && next_thread()->priority > thread_current()->priority)
+  {
+    thread_yield ();
+  }
 }
-bool priority_allupdate(bool yieldflag)
+bool priority_allupdate(void)
 {
   int i;
   struct list_elem* e;
   struct thread* t, *current = thread_current();
 
+  priority_update(current);
   for(i=0;i<=PRI_MAX;i++)
   {
     for(e=list_begin(ready_list+i);
      e!=list_end(ready_list+i);
-       e=list_next(e))
-       {
-         t = getThread_byElem(e);
-         priority_update(t,false);
-       }
+      e=list_next(e))
+      {
+        t = getThread_byElem(e);
+        e = priority_update(t);
+      }
   }
 
   if(current->priority < next_thread()->priority)
   {
     //ASSERT2(current, next_thread());
-    if(yieldflag==true)
-      if(intr_context()==false)
-        thread_yield ();
-    return true;
+        return true;
   }
   return false;
 }
 
-bool priority_update(struct thread* t, bool yieldflag)
+struct list_elem* priority_update(struct thread* t)
 {
   //priority = PRI_MAX - (recent_cpu / 4) - (nice * 2),
   if(t==NULL || t==idle_thread)
     return false;
-  int temp1, temp2, temp3; //all fixed
+  int temp1, temp2, temp3, temp4; //all fixed
   temp1 = tofixed(PRI_MAX);
-  temp2 = tofixed(divcompound(t->recent_cpu, 4));
+  temp2 = divcompound(t->recent_cpu, 4);
   temp3 = multcompound(tofixed(t->nice),2);
   temp1 = subfixed(temp1, temp2);
   temp1 = subfixed(temp1, temp3);
   temp1 = toint(temp1);
 
+  temp4 = t->priority;
   t->priority = temp1;
   
   if(t->priority > PRI_MAX)
     t->priority = PRI_MAX;
   if(t->priority < PRI_MIN)
     t->priority = PRI_MIN;
-    
-  if(intr_context()==false && t->priority > thread_current()->priority)
-  {
-    if(yieldflag)
-      thread_yield ();
-    return true;
+
+  struct list_elem* nowelem = &(t->elem);
+  if(temp4 != t->priority && t!= running_thread()){
+    nowelem = list_remove(&t->elem)->prev;
+    list_push_back (ready_list+(t->priority), &t->elem);
   }
-  return false;
+  return nowelem;
 }
 void recent_cpu_allupdate(void)
 {
@@ -1127,6 +1126,7 @@ void recent_cpu_allupdate(void)
   struct thread *t;
   int i;
 
+  recent_cpu_update(thread_current());
   for (i = 0; i <= PRI_MAX; i++)
   {
     for (e = list_begin(ready_list+i);
@@ -1140,12 +1140,12 @@ void recent_cpu_allupdate(void)
 }
 void recent_cpu_update(struct thread *t)
 {
-  load_avg = tofixed(load_avg);
   /*fixed*/int dload_avg = multcompound(load_avg,2);
   int temp2 = addcompound(dload_avg,1);
   int temp3 = tofixed(t->nice);
 
   dload_avg = divfixed(dload_avg,temp2);
+  dload_avg = multfixed(dload_avg, t->recent_cpu);
   dload_avg = addfixed(dload_avg,temp3);
   t->recent_cpu = dload_avg;  
 }
@@ -1160,17 +1160,41 @@ void load_avg_update(void)
   int ready_thread = 0;
   int i;
   struct list_elem* e;
+
   for(i=0;i<=PRI_MAX;i++)
-    for(e=list_begin(ready_list + i);e!=list_end(ready_list + i);e=list_next(e))
-      ready_thread++;
+    ready_thread += list_size(ready_list+i);
+
   if(thread_current() != idle_thread)
     ready_thread+=1;
+
+  /*
+  for(i=0;i<=PRI_MAX;i++)
+  {
+    printf("prioirty(%d) : ",i);
+    for(e = list_begin(ready_list+i); e != list_end(ready_list+i); e = list_next(e))
+    {
+      printf("<%s(%d)> ",getThread_byElem(e)->name, getThread_byElem(e)->tid);
+    }
+    printf("\n");
+  }
+
+  printf("sleep : ");
+  for(e= list_begin(&sleep_list); e != list_end(&sleep_list);e=list_next(e))
+  {
+    printf("<%s(%d)> ",getThread_byElem(e)->name, getThread_byElem(e)->tid);
+  }
+  printf("\n");
+  */
+
+  //printf("\n==cur_avg : %d , ready_thread : %d, ", load_avg, ready_thread);
 
   int most = divfixed(tofixed(59),tofixed(60));
   int least = divfixed(tofixed(1),tofixed(60));
   most = multfixed(most, load_avg);
   least = multfixed(least, tofixed(ready_thread));
   load_avg = addfixed(most, least); 
+
+  //printf("calc_result : %d==\n", thread_get_load_avg());
 }
 
 struct thread *

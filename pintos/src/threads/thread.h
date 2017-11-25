@@ -203,10 +203,9 @@ void alertThread(const char* debugmsg, struct thread* t);
 bool less_thread_endsleep(const struct list_elem* a, const struct list_elem* b, void* aux);
 bool greater_thread_priority(const struct list_elem* a, const struct list_elem* b, void* aux);
 
-//yield해야 되면 true다.
-bool priority_update(struct thread* t, bool yieldflag);
+struct list_elem* priority_update(struct thread* t);
 //yield해야 되면 true다. 
-bool priority_allupdate(bool yieldflag);
+bool priority_allupdate(void);
 
 void recent_cpu_increment(void);
 void recent_cpu_update(struct thread *t);
