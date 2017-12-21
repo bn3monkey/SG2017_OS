@@ -1,5 +1,3 @@
-
-
 const int fpt = 1 << 14;
 #define tofixed(n) ((n)*fpt)
 #define toint(x) ((x)/fpt)
@@ -13,3 +11,4 @@ const int fpt = 1 << 14;
 #define divfixed(x,y) ((int64_t)(x)*(fpt)/(y))
 #define divcompound(x,n) ((x)/(n))
 
+//위 매크로를 사용하여, 실수 연산을 진행하였다.
