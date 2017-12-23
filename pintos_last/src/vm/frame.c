@@ -90,7 +90,7 @@ bool delete_frame_entry(void* paddr)
                 lock_release(&frame_table_lock);
 
                 palloc_free_page(entry->paddr);
-                free(paddr);
+                free(entry);
                 return true;
             }
         }
@@ -103,6 +103,14 @@ struct frame_entry* elem_to_frame_entry(struct list_elem* elem)
 {
     return list_entry(elem, struct frame_entry, elem);
 }
+
+//frame에서 page를 가져온다.
+struct page_entry* frame_to_page(struct frame_entry* entry)
+{
+    return entry->pte;
+}
+
+
 //더 이상 할당할 frame이 없는 경우, evict할 frame을 찾아서 위치를 리턴한다.
 void* evict_frame (void)
 {

@@ -41,6 +41,10 @@ bool delete_frame_entry(void* paddr);
 //elem에서 frame_entry를 가져온다.
 struct frame_entry* elem_to_frame_entry(struct list_elem* elem);
 
+//frame entry에서 page entry를 가져온다.
+struct page_entry* frame_to_page(struct frame_entry* entry);
+
+
 //더 이상 할당할 frame이 없는 경우, evict할 frame을 찾아서 위치를 리턴한다.
 void* evict_frame (void);
 #endif
