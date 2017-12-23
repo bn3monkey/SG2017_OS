@@ -12,12 +12,20 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+
 #ifdef USERPROG
+
 #include "userprog/process.h"
+#include "vm/frame.h"
+#include "vm/page.h"
+
 #endif
+
 #include "filesys/file.h"
 #include "devices/timer.h"
 #include "threads/fixed_point.h"
+
+
 
 /* Random value for struct thread's `magic' member.
    Used to detect stack overflow.  See the big comment at the top
@@ -230,6 +238,12 @@ thread_init (void)
   /* Start Added Context of Project 2 */
   list_init(&sleep_list);
   /* End Added Context of Project 2 */
+
+  /* Start Added Context of Project 3 */
+  //page_table을 process.c의 load에서 초기화해준다.
+  //frame_table은 thread.c의 init_thread에서 초기화해준다.
+  init_frame_table();
+  /* ENd Added Context of Project 3 */
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -822,6 +836,8 @@ init_thread (struct thread *t, const char *name, int priority)
     t->fd_table[i] = NULL;
   t->processfile = NULL;
   /* End Added Context of Project 1-2 */
+
+
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and

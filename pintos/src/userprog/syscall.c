@@ -112,7 +112,7 @@ static bool validate_user_vaddr(void* p)
     NOT_REACHED();
     return false;
   }
-  ASSERT2(!(is_kernel_vaddr(p) || p==NULL), p);
+  //ASSERT2(!(is_kernel_vaddr(p) || p==NULL), p);
   return true;
 }  
 

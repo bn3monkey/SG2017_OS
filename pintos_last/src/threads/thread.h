@@ -3,6 +3,7 @@
 
 #include <debug.h>
 #include <list.h>
+#include <hash.h>
 #include <stdint.h>
 #include "threads/synch.h"
 //#include "filesys/filesys.h"
@@ -144,6 +145,10 @@ typedef int tid_t;
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
 #endif
+
+    /* Start Added Context Of Project 3 */
+    struct hash pt;
+    /* End Added Context Of Project 3 */
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */

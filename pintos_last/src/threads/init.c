@@ -70,6 +70,8 @@ static void locate_block_devices (void);
 static void locate_block_device (enum block_type, const char *name);
 #endif
 
+
+
 int main (void) NO_RETURN;
 
 /* Pintos main program. */
@@ -256,8 +258,10 @@ parse_options (char **argv)
         random_init (atoi (value));
       else if (!strcmp (name, "-mlfqs"))
         thread_mlfqs = true;
-      else if (!strcmp (name, "-aging"))
+#ifndef USERPROG
+      else if (!strcmp (name, "-aging")) 
         thread_prior_aging = true;
+#endif
 #ifdef USERPROG
       else if (!strcmp (name, "-ul"))
         user_page_limit = atoi (value);

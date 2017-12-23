@@ -19,6 +19,10 @@
 #include "threads/vaddr.h"
 #include "threads/malloc.h"
 
+#include "vm/page.h"
+#include "vm/frame.h"
+
+
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
 
@@ -247,9 +251,8 @@ void process_exit(void)
   
   uint32_t *pd;
 
-/* Start Added Context of Project 1-2 */
+  /* Start Added Context of Project 1-2 */
   
- 
    int i;
    for(i=0;i<MAX_OPENFILE;i++)
     file_close(cur->fd_table[i]);
@@ -261,6 +264,10 @@ void process_exit(void)
 
   //Close All the file and destroy fd_table.
   /* End Added Context of Project 1-2 */
+
+  /* Start Added Context of Project 3 */
+  destory_page_table(&(cur->pt));
+  /* End Added Context of Project 3 */
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
@@ -390,6 +397,14 @@ bool load(const char *file_name, void (**eip)(void), void **esp)
   if (t->pagedir == NULL)
     goto done;
   process_activate();
+
+  /* Start Added Context of Project 3 */
+  //page_table을 process.c의 load에서 초기화해준다.
+  //frame_table은 thread.c의 init_thread에서 초기화해준다.
+  // page_table 초기화에 실패하면 해당 process를 죽인다.
+  if(!init_page_table(&(t->pt)))
+    goto done;
+  /* End Added Context of Project 3 */
 
   /* Parsing filename */
   oristr = (char *)malloc(strlen(file_name) + 1);
@@ -598,14 +613,21 @@ load_segment(struct file *file, off_t ofs, uint8_t *upage,
     size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
     /* Get a page of memory. */
-    uint8_t *knpage = palloc_get_page(PAL_USER);
+    
+    //Project 3 : Suggestion 1
+    //uint8_t *knpage = palloc_get_page(PAL_USER);
+    uint8_t *knpage = set_frame_entry(NULL);
+    
     if (knpage == NULL)
       return false;
 
     /* Load this page. */
     if (file_read(file, knpage, page_read_bytes) != (int)page_read_bytes)
     {
-      palloc_free_page(knpage);
+      //Project 3 : Suggestion 1
+      //palloc_free_page(knpage);
+      delete_frame_entry(knpage);
+
       return false;
     }
     memset(knpage + page_read_bytes, 0, page_zero_bytes);
@@ -613,7 +635,9 @@ load_segment(struct file *file, off_t ofs, uint8_t *upage,
     /* Add the page to the process's address space. */
     if (!install_page(upage, knpage, writable))
     {
-      palloc_free_page(knpage);
+      //Project 3 : Suggestion 1
+      //palloc_free_page(knpage);
+      delete_frame_entry(knpage);
       return false;
     }
 
@@ -633,14 +657,19 @@ setup_stack(void **esp)
   uint8_t *kpage;
   bool success = false;
 
-  kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+  //Project 3 : Suggestion 1
+  //kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+  kpage = set_frame_entry(NULL);
+  
   if (kpage != NULL)
   {
     success = install_page(((uint8_t *)PHYS_BASE) - PGSIZE, kpage, true);
     if (success)
       *esp = PHYS_BASE;
     else
-      palloc_free_page(kpage);
+    //Project 3 : Suggestion 1
+    //palloc_free_page(kpage);
+    delete_frame_entry(kpage);
   }
   return success;
 }
