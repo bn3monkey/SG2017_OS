@@ -114,7 +114,17 @@ static bool validate_user_vaddr(void* p)
   }
   //ASSERT2(!(is_kernel_vaddr(p) || p==NULL), p);
   return true;
-}  
+} 
+static bool validate_user_buffer(void *p)
+{
+  char* ptr = p;
+  validate_user_vaddr((void *)ptr);
+  while(*ptr != '\0')
+  {
+    ptr++;
+    validate_user_vaddr((void *)ptr);
+  }
+} 
 
 
 /* For getting argument */
@@ -175,15 +185,7 @@ static char* sys_arg_str(int arg, struct intr_frame *f UNUSED)
   //Validity Check of Stack Pointer
   validate_user_vaddr((void *)((f->esp)+sys_arg_gap(arg)));
   char* temp = sys_in(arg, char *);
-  char* ptr = temp;
-  //char* file = ptr;
-  validate_user_vaddr((void *)ptr);
-  while(*ptr != '\0')
-  {
-    //file = ptr;
-    validate_user_vaddr((void *)ptr);
-    ptr++;
-  }
+  validate_user_buffer((void *)temp);
 
   #ifdef DEBUGARG
   printf("the sytem call argument(%d) is %s\n", arg, temp);
