@@ -614,12 +614,27 @@ load_segment(struct file *file, off_t ofs, uint8_t *upage,
 
     /* Get a page of memory. */
     
-    //Project 3 : Suggestion 1
     //uint8_t *knpage = palloc_get_page(PAL_USER);
-    uint8_t *knpage = set_frame_entry(NULL);
+    //Project 3 : Suggestion 1
+    //uint8_t *knpage = set_frame_entry(NULL);
+    //Proeject 3 : Suggestion 2
     
-    if (knpage == NULL)
+    //pte를 하나 잡는다. 공간이 부족해서 pte를 못 잡으면 false를 리턴한다.
+    struct page_entry* knpte;
+    knpte = set_page_entry_from_file(upage, file, ofs, read_bytes, writable);
+    if(knpte == NULL)
       return false;
+
+    // 이에 해당하는 frame_entry에 해당하는 주소를 찾는다.
+    // frame_entry에 해당하는 물리적 주소를 못 찾으면 false를 리턴한다.
+    uint8_t *knpage = set_frame_entry(knpte); 
+    if (knpage == NULL)
+    {
+      //잡아놓았던 page_table_entry를 해제한다.
+      delete_page_entry(knpte, true);
+      return false;
+    }
+    
 
     /* Load this page. */
     if (file_read(file, knpage, page_read_bytes) != (int)page_read_bytes)
@@ -645,6 +660,7 @@ load_segment(struct file *file, off_t ofs, uint8_t *upage,
     read_bytes -= page_read_bytes;
     zero_bytes -= page_zero_bytes;
     upage += PGSIZE;
+    ofs += page_read_bytes;
   }
   return true;
 }
@@ -655,23 +671,45 @@ static bool
 setup_stack(void **esp)
 {
   uint8_t *kpage;
-  bool success = false;
+  struct page_entry* kpte;
+  //bool success = false;
 
-  //Project 3 : Suggestion 1
   //kpage = palloc_get_page(PAL_USER | PAL_ZERO);
-  kpage = set_frame_entry(NULL);
+  //Project 3 : Suggestion 1
+  //kpage = set_frame_entry(NULL);
   
+  //Project 3 : Suggestion 2
+  //1. page를 하나 할당한다.
+  kpte = set_page_entry_from_swap( (void *)PHYS_BASE - PGSIZE, 0);
+  if(kpte == NULL)
+    return false;
+  //2. page와 물리주소에서 적절한 frame을 연결한다.
+  if( link_page_entry(kpte, (void **)(&kpage)) )
+  {
+    *esp = PHYS_BASE; //있으면 현재 스택 주소는 physical base로 정한다.
+    memset(kpage, 0 , PGSIZE); //새로 잡은 frame 내부의 값을 전부 0으로 세팅해준다.
+  }
+  else
+  {
+    //실패하면 PAGE_TABLE에서 page_entry를 제거한다.
+    delete_page_entry(kpte, true);
+    return false; //연결 실패면 스택을 잡을 수 없으므로 false를 리턴한다.
+  }
+
+  return true;
+  /*
   if (kpage != NULL)
   {
     success = install_page(((uint8_t *)PHYS_BASE) - PGSIZE, kpage, true);
     if (success)
       *esp = PHYS_BASE;
     else
-    //Project 3 : Suggestion 1
     //palloc_free_page(kpage);
-    delete_frame_entry(kpage);
+    //Project 3 : Suggestion 1
+    //delete_frame_entry(kpage);
   }
   return success;
+  */
 }
 
 /* Adds a mapping from user virtual address UPAGE to kernel

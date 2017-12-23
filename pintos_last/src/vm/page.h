@@ -16,7 +16,7 @@ struct page_file
     struct file* file;
     size_t offset;
     size_t read_bytes;
-    size_t zero_bytes;
+    //size_t zero_bytes; PGSIZE - read_byes;
 };
 //flag가 0x05일 때 작용.
 //size_t swap_index가 쓰임
@@ -73,7 +73,7 @@ bool destory_page_table(struct hash* pt);
 //page_entry를 현재 thread의 page_table에 넣는다.
 struct page_entry*  set_page_entry(void* vaddr, int flag);
 //file_system에 관한 page_entry를 page_table에 넣는다.
-struct page_entry*  set_page_entry_from_file(void* vaddr, struct file* file, size_t offset, size_t read_bytes, size_t zero_bytes);
+struct page_entry*  set_page_entry_from_file(void* vaddr, struct file* file, size_t offset, size_t read_bytes, bool writable);
 //swap_system에 관한 page_entry를 page_table에 넣는다. 
 struct page_entry*  set_page_entry_from_swap(void* vaddr, size_t swap_index);
 //all_zero에 관한 page_entry를 page_table 넣는다. 
@@ -107,6 +107,6 @@ void* page_to_frame(struct page_entry* entry);
 
 /* stack grow 관련 */
 //현재 thread의 stack을 최대 8MB까지 늘릴 수 있게 한다.
-bool stack_grow(void* vaddr);
+bool stack_grow(void* vaddr, void* esp, void** out_pte);
 
 #endif

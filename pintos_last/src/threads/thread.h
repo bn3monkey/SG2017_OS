@@ -148,6 +148,7 @@ typedef int tid_t;
 
     /* Start Added Context Of Project 3 */
     struct hash pt;
+    uint32_t *esp;
     /* End Added Context Of Project 3 */
 
     /* Owned by thread.c. */

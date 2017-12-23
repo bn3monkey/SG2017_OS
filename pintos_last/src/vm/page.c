@@ -8,6 +8,9 @@
 #include "userprog/syscall.h"
 #include "userprog/process.h"
 #include "filesys/file.h"
+#include "threads/interrupt.h"
+
+#include <stdio.h>
 
 void file_lock_acquire(void);
 void file_lock_release(void);
@@ -82,18 +85,24 @@ struct page_entry* set_page_entry(void* vaddr, int flag)
     entry->vaddr = pg_round_down(vaddr);
     entry->flag = flag;
 
+    //중복된 게 안에 있으면, vaddr은 하나의 page_table에 한 개 밖에 있을 수 없기 때문에 잘 못 된 것이다.
+    if(hash_insert(&thread_current()->pt, &entry->elem) != NULL )
+    {
+        free(entry);
+        entry = NULL;
+    }
     return entry;
 }
 //파일에서 불러오는 것들.
 //file_system에 관한 page_entry를 page_table에 넣는다.
-struct page_entry*  set_page_entry_from_file(void* vaddr, struct file* file, size_t offset, size_t read_bytes, size_t zero_bytes)
+struct page_entry*  set_page_entry_from_file(void* vaddr, struct file* file, size_t offset, size_t read_bytes, bool writable)
 {
-    struct page_entry* entry = set_page_entry(vaddr, (p_nfile | p_unpin | p_write));
+    int read_or_write = writable ? p_write : p_read;
+    struct page_entry* entry = set_page_entry(vaddr, (p_nfile | p_unpin | read_or_write));
     if(!entry) return NULL;
     entry->pf.file = file;
     entry->pf.offset = offset;
-    entry->pf.offset = read_bytes;
-    entry->pf.offset = zero_bytes;
+    entry->pf.read_bytes = read_bytes;
     return entry;
 }
 //파일에서 불러오지 않은 것들.
@@ -127,7 +136,8 @@ struct page_entry* get_page_entry(void* vaddr)
     temp.vaddr = pg_round_down(vaddr);
 
     struct hash_elem* elem = hash_find(&thread_current()->pt, &temp.elem);
-    if(elem == NULL) return NULL;
+    if(elem == NULL) 
+        return NULL;
     return elem_to_page_entry(elem);
 }
 //현재 thread의 page_table에서 page_entry를 제거한다. (하나 뻄. pop = true일 때)
@@ -150,7 +160,7 @@ bool fetch_page(struct page_entry* pte)
 
     //2. kernel process일 때는
     // 주로 page_fault나 system call 수행 중일 때이다.
-    // 끝날 떄즘 해제하면 된다.
+    // 끝날 때쯤 해제하면 된다.
     set_pin(pte, p_pin);
 
     //2. page_entry에 이미 저장된 fetch할 type대로 fetch하면 된다.
@@ -161,6 +171,7 @@ bool fetch_page(struct page_entry* pte)
         case p_swap : return fetch_fromswap(pte);
         //case p_allzero : return fetch_fromeallzero(pte);
     }
+    return false;
 }
 // page_entry를 file로부터 frame에 fetch한다.
 bool fetch_fromfile(struct page_entry* pte)
@@ -258,8 +269,46 @@ void* page_to_frame(struct page_entry* entry)
 
 /* stack grow 관련 */
 //현재 thread의 stack을 최대 8MB까지 늘릴 수 있게 한다.
-bool stack_grow(void* vaddr)
+bool stack_grow(void* vaddr, void* esp, void** out_pte)
 {
-    vaddr = NULL;
+    //1. push에 어느 정도 오차가 있기 때문에 32 bit 안쪽에 가상주소가 있으면,
+    //   스택으로 친다. 하지만 바깥에 있으면 예외처리한다. 
+    if(vaddr < esp - 32)
+    {
+        //printf("vaddr : %x  esp :  %x\n",vaddr,esp);
+       // printf("esp - stack = %x\n",esp - vaddr);
+        return false;
+    }
+    //2. 현재 있는 가상주소가 최대 스택 사이즈를 벗어나도, 예외처리를 한다.
+    if((size_t)pg_round_down(vaddr) < (size_t)PHYS_BASE - MAX_STACK)
+    {
+        //printf("virtual address very low\n");
+        return false;
+    }
+    //3. 새로 할당할 스택 영역에 대해, PAGE_TABLE_ENTRY를 만든다.
+    struct page_entry* pte;
+    pte = set_page_entry_from_swap(pg_round_down(vaddr), 0);
+    //page_table_entry가 안 만들어지면 false.
+    if(pte==NULL)
+        return false;
+    //4. stack 영역은 file에서 받아오는 것이 아니므로, SWAP_DISK 영역과 교환한다.
+    set_fetch(pte, p_swap);
+    set_pin(pte, p_pin);
+
+     //printf("pte success\n");
+        
+
+    //5. 임시로 frame을 담을 변수를 만든 뒤, pte와 새로 할당한 frame을 연결한다.
+    //6. 연결할 수 없으면, false를 리턴한다.
+    void* frame;
+    if(!link_page_entry(pte, &frame)) //실패시 알아서 frame과 pte를 할당해제해준다.
+        return false;
+
+    //printf("link success\n");
+
+    //7. 성공했으니 page_table을 바깥으로 내보내준다.
+    if(out_pte != NULL)
+        *out_pte = pte;
+
     return true;
 }

@@ -229,6 +229,7 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f UNUSED) 
 {
+  thread_current()->esp = f->esp;
   sys_func_arr[sys_func_name(f)] (f);
 }
 

@@ -6,6 +6,8 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
+#include "vm/page.h"
+
 #include "userprog/syscall.h"
 
 /* Number of page faults processed. */
@@ -151,13 +153,54 @@ page_fault (struct intr_frame *f)
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
 
+/*
   if(!not_present)
     s_exit(-1);
   if(!user)
     s_exit(-1);
-
   if(fault_addr == NULL || is_kernel_vaddr(fault_addr))
     s_exit(-1);    
+*/
+
+//Project 3 : Suggestion 2
+bool fetch = false;
+struct page_entry* fault_pte;
+void* esp;
+
+//1. user_addr인데 frame에 없으면, swap_disk나 파일 영역에 있다!
+if (not_present && is_user_vaddr(fault_addr))
+{
+  //2. 해당 fault_addr에 대한 page_table 정보가 존재하냐?
+  fault_pte = get_page_entry(fault_addr);
+  if(fault_pte)
+  {
+    //3. 존재하면, swap_disk나 file에 있을 것이므로 가져온다.
+     if(fetch_page(fault_pte))
+       fetch = true;
+    //4. interrupt가 거의 끝났으니, pin을 해제한다.
+     set_pin(fault_pte, p_unpin);  
+  }
+  else
+  {
+    //5. user 내에서 stack pointer를 담고 있는 변수가 다르다!
+    esp = user ? f->esp : thread_current()->esp;
+    //6. 존재하지 않으면, stack 범위인지 확인하고 stack을 늘려본다.
+    if(stack_grow(fault_addr, esp, &fault_pte))
+    {
+      fetch = true;
+      //7.stack_grow가 성공했으면 pte가 생겼으므로, kerenl process에서 나가기 때문에 해당 pte의 pin을 풀어준다.
+      set_pin(fault_pte, p_unpin);
+    }
+    //8. stack이 더 늘어나지 않으면 죽인다.
+  }
+
+}
+
+//fetch 성공했으면, 그대로 끝낸다.
+if(fetch)
+  return;
+else
+  s_exit(-1);
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to
